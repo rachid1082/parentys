@@ -141,8 +141,9 @@
 
 @layer base {
   * {
-    @apply border border-[var(--border)] outline outline-[var(--ring)]/50;
-  }
+  @apply border border-[var(--border)] outline outline-[color:var(--ring)];
+}
+
 
   body {
     @apply bg-background text-foreground;
