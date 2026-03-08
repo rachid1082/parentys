@@ -1,9 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-
-/*@import "tw-animate-css";*/
-
 @custom-variant dark (&:is(.dark *));
 
 /* New Parentys brand color palette with natural, warm tones */
@@ -95,7 +92,6 @@
   --font-sans: "Plus Jakarta Sans", "Plus Jakarta Sans Fallback", system-ui, sans-serif;
   --font-display: "IBM Plex Sans", "IBM Plex Sans Fallback", system-ui, sans-serif;
   --font-accent: "Marck Script", "Marck Script Fallback", cursive;
-
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -117,18 +113,15 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
-
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
-
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -141,14 +134,13 @@
 
 @layer base {
   * {
-  @apply border-border outline-ring/50;
-}
-
-
+    @apply border-border outline-ring/50;
+  }
   body {
-    @apply bg-[var(--background)] text-[var(--foreground)];
+    @apply bg-background text-foreground;
   }
 
+  /* Typography utilities for brand fonts */
   .font-display {
     font-family: var(--font-display);
   }
