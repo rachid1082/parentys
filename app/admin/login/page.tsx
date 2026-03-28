@@ -11,7 +11,9 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import Loading from "./loading"
 
-const REDIRECT_URL = "https://v0-parentys-landing-page.vercel.app/auth/callback"
+const REDIRECT_URL = typeof window !== "undefined" 
+  ? `${window.location.origin}/admin/reset?type=recovery` 
+  : "/admin/reset?type=recovery"
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState("")
