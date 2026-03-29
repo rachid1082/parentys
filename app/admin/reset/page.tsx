@@ -1,8 +1,7 @@
 "use client"
 
-import type React from "react"
 import { useState, useEffect } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -18,56 +17,62 @@ export default function AdminResetPage() {
   const [sessionValid, setSessionValid] = useState(false)
   const [initializing, setInitializing] = useState(true)
   const router = useRouter()
-  const searchParams = useSearchParams()
 
   useEffect(() => {
-    const initializeSession = async () => {
-      const type = searchParams.get("type")
-      const token = searchParams.get("token")
+    const initialize = async () => {
+      // Read the full URL BEFORE Next.js strips the hash
+      const fullUrl = window.location.href
 
-      // Check if this is a recovery flow
-      if (type !== "recovery" || !token) {
+      const hashIndex = fullUrl.indexOf("#")
+      if (hashIndex === -1) {
         setError("Invalid or missing recovery link. Please request a new password reset.")
         setInitializing(false)
         return
       }
 
-      try {
-        const supabase = createClient()
-        
-        // Exchange the token for a session
-        const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(token)
+      const hash = fullUrl.substring(hashIndex + 1)
+      const params = new URLSearchParams(hash)
 
-        if (exchangeError) {
-          setError("Invalid or expired recovery link. Please request a new password reset.")
-          setInitializing(false)
-          return
-        }
+      const access_token = params.get("access_token")
+      const refresh_token = params.get("refresh_token")
+      const type = params.get("type")
 
-        // Session is valid, allow password reset
-        setSessionValid(true)
+      if (!access_token || !refresh_token || type !== "recovery") {
+        setError("Invalid or missing recovery link. Please request a new password reset.")
         setInitializing(false)
-      } catch (err) {
-        setError("An error occurred while verifying your recovery link.")
-        setInitializing(false)
+        return
       }
+
+      const supabase = createClient()
+
+      const { error: sessionError } = await supabase.auth.setSession({
+        access_token,
+        refresh_token,
+      })
+
+      if (sessionError) {
+        setError("Invalid or expired recovery link. Please request a new password reset.")
+        setInitializing(false)
+        return
+      }
+
+      setSessionValid(true)
+      setInitializing(false)
     }
 
-    initializeSession()
-  }, [searchParams])
+    initialize()
+  }, [])
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
     setSuccess("")
 
-    // Validate passwords match
     if (newPassword !== confirmPassword) {
       setError("Passwords do not match.")
       return
     }
 
-    // Validate password length
     if (newPassword.length < 6) {
       setError("Password must be at least 6 characters long.")
       return
@@ -77,69 +82,53 @@ export default function AdminResetPage() {
 
     try {
       const supabase = createClient()
-      
+
       const { error: updateError } = await supabase.auth.updateUser({
         password: newPassword,
       })
 
       if (updateError) {
         setError("Failed to update password. Please try again.")
-        setSuccess("")
         setLoading(false)
         return
       }
 
       setSuccess("Password updated successfully. Redirecting to login...")
-      setError("")
       setLoading(false)
 
-      // Redirect to login after a short delay
       setTimeout(() => {
         router.push("/admin/login")
       }, 2000)
     } catch (err) {
       setError("An error occurred. Please try again.")
-      setSuccess("")
       setLoading(false)
     }
   }
 
-  // Show loading state while initializing
   if (initializing) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#F5F1E6] p-4">
         <Card className="w-full max-w-md">
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <div className="w-8 h-8 border-4 border-[#878D73] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-              <p className="text-sm text-muted-foreground">Verifying recovery link...</p>
-            </div>
+          <CardContent className="pt-6 text-center">
+            <div className="w-8 h-8 border-4 border-[#878D73] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+            <p className="text-sm text-muted-foreground">Verifying recovery link...</p>
           </CardContent>
         </Card>
       </div>
     )
   }
 
-  // Show error state if session is invalid
   if (!sessionValid) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#F5F1E6] p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
-            <img
-              src="https://tznhipxlrohslxbrdrnm.supabase.co/storage/v1/object/public/assets/brand/logo/main/Main%20Logo%20Parentys.jpg"
-              alt="Parentys"
-              className="h-12 mx-auto mb-4"
-            />
             <CardTitle className="font-display text-2xl">Reset Password</CardTitle>
             <CardDescription>Unable to verify recovery link</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="p-3 text-sm text-red-600 bg-red-50 rounded-lg mb-4">{error}</div>
-            <Button
-              className="w-full"
-              onClick={() => router.push("/admin/login")}
-            >
+            <Button className="w-full" onClick={() => router.push("/admin/login")}>
               Back to Login
             </Button>
           </CardContent>
@@ -148,62 +137,43 @@ export default function AdminResetPage() {
     )
   }
 
-  // Show password reset form
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#F5F1E6] p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <img
-            src="https://tznhipxlrohslxbrdrnm.supabase.co/storage/v1/object/public/assets/brand/logo/main/Main%20Logo%20Parentys.jpg"
-            alt="Parentys"
-            className="h-12 mx-auto mb-4"
-          />
           <CardTitle className="font-display text-2xl">Set New Password</CardTitle>
           <CardDescription>Enter your new password below</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleResetPassword} className="space-y-4">
-            {error ? (
-              <div className="p-3 text-sm text-red-600 bg-red-50 rounded-lg">{error}</div>
-            ) : success ? (
-              <div className="p-3 text-sm text-green-600 bg-green-50 rounded-lg">{success}</div>
-            ) : null}
+            {error && <div className="p-3 text-sm text-red-600 bg-red-50 rounded-lg">{error}</div>}
+            {success && <div className="p-3 text-sm text-green-600 bg-green-50 rounded-lg">{success}</div>}
+
             <div className="space-y-2">
-              <Label htmlFor="newPassword">New Password</Label>
+              <Label>New Password</Label>
               <Input
-                id="newPassword"
                 type="password"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="Enter new password"
                 required
                 minLength={6}
               />
             </div>
+
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Label>Confirm Password</Label>
               <Input
-                id="confirmPassword"
                 type="password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Confirm new password"
                 required
                 minLength={6}
               />
             </div>
-            <Button type="submit" className="w-full" disabled={loading || !!success}>
+
+            <Button type="submit" className="w-full" disabled={loading}>
               {loading ? "Updating..." : "Update Password"}
             </Button>
-            <div className="text-center">
-              <button
-                type="button"
-                onClick={() => router.push("/admin/login")}
-                className="text-sm text-[#878D73] hover:underline"
-              >
-                Back to login
-              </button>
-            </div>
           </form>
         </CardContent>
       </Card>
