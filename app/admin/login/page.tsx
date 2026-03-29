@@ -11,8 +11,8 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import Loading from "./loading"
 
-const redirectTo = process.env.NEXT_PUBLIC_SITE_URL + "/admin/reset"
-console.log("redirectTo:", redirectTo)
+// HARD‑CODED FIX — this is the correct redirect URL
+const redirectTo = "https://dev.parentys.com/admin/reset"
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState("")
@@ -57,7 +57,6 @@ export default function AdminLoginPage() {
         return
       }
 
-      // Check for approved profile with permissions
       const supabase = createClient()
       
       const { data: profile } = await supabase
@@ -75,7 +74,6 @@ export default function AdminLoginPage() {
         return
       }
 
-      // Check if profile has any admin permissions
       const { data: permissions } = await supabase
         .from("profile_permissions")
         .select("permission")
@@ -103,15 +101,15 @@ export default function AdminLoginPage() {
     setError("")
     setSuccess("")
     setLoading(true)
+
     try {
-      // Supabase may return an error even when the email is sent.
+      // THIS IS NOW CORRECT — Supabase will generate a real recovery link
       await createClient().auth.resetPasswordForEmail(email, { redirectTo })
-      // Always show success unless the request throws.
+
       setSuccess("A recovery email has been sent.")
       setError("")
       setLoading(false)
     } catch (err) {
-      // Only true exceptions are real failures.
       setError("Failed to send recovery email.")
       setSuccess("")
       setLoading(false)
@@ -142,6 +140,7 @@ export default function AdminLoginPage() {
               ) : success ? (
                 <div className="p-3 text-sm text-green-600 bg-green-50 rounded-lg">{success}</div>
               ) : null}
+
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
@@ -153,6 +152,7 @@ export default function AdminLoginPage() {
                   required
                 />
               </div>
+
               {mode === "login" && (
                 <div className="space-y-2">
                   <Label htmlFor="password">Password</Label>
@@ -166,6 +166,7 @@ export default function AdminLoginPage() {
                   />
                 </div>
               )}
+
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading
                   ? mode === "login"
@@ -175,6 +176,7 @@ export default function AdminLoginPage() {
                     ? "Sign In"
                     : "Send Reset Link"}
               </Button>
+
               <div className="text-center">
                 <button
                   type="button"
