@@ -4,6 +4,7 @@ import type React from "react"
 import { Suspense } from "react"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import { createClient } from "@/lib/supabase"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -185,10 +186,18 @@ export default function AdminLoginPage() {
                     setError("")
                     setSuccess("")
                   }}
-                  className="text-sm text-[#878D73] hover:underline"
+                  className="text-sm text-[#878D73] hover:underline block w-full"
                 >
                   {mode === "login" ? "Forgot your password?" : "Back to login"}
                 </button>
+                {mode === "login" && (
+                  <Link
+                    href="/admin/register"
+                    className="text-sm text-[#878D73] hover:underline block"
+                  >
+                    Don&apos;t have an account? Sign up
+                  </Link>
+                )}
               </div>
             </form>
           </CardContent>
