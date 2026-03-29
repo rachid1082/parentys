@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase"
 import { Button } from "@/components/ui/button"
@@ -20,7 +20,17 @@ export default function AdminResetPage() {
 
   useEffect(() => {
     const initialize = async () => {
-      const hash = window.location.hash.substring(1)
+      // Read the full URL BEFORE Next.js strips the hash
+      const fullUrl = window.location.href
+
+      const hashIndex = fullUrl.indexOf("#")
+      if (hashIndex === -1) {
+        setError("Invalid or missing recovery link. Please request a new password reset.")
+        setInitializing(false)
+        return
+      }
+
+      const hash = fullUrl.substring(hashIndex + 1)
       const params = new URLSearchParams(hash)
 
       const access_token = params.get("access_token")
@@ -53,7 +63,7 @@ export default function AdminResetPage() {
     initialize()
   }, [])
 
-  const handleResetPassword = async (e) => {
+  const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
     setSuccess("")
@@ -69,22 +79,30 @@ export default function AdminResetPage() {
     }
 
     setLoading(true)
-    const supabase = createClient()
 
-    const { error: updateError } = await supabase.auth.updateUser({
-      password: newPassword,
-    })
+    try {
+      const supabase = createClient()
 
-    if (updateError) {
-      setError("Failed to update password. Please try again.")
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: newPassword,
+      })
+
+      if (updateError) {
+        setError("Failed to update password. Please try again.")
+        setLoading(false)
+        return
+      }
+
+      setSuccess("Password updated successfully. Redirecting to login...")
       setLoading(false)
-      return
+
+      setTimeout(() => {
+        router.push("/admin/login")
+      }, 2000)
+    } catch (err) {
+      setError("An error occurred. Please try again.")
+      setLoading(false)
     }
-
-    setSuccess("Password updated successfully. Redirecting to login...")
-    setLoading(false)
-
-    setTimeout(() => router.push("/admin/login"), 2000)
   }
 
   if (initializing) {
@@ -133,12 +151,24 @@ export default function AdminResetPage() {
 
             <div className="space-y-2">
               <Label>New Password</Label>
-              <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required />
+              <Input
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                required
+                minLength={6}
+              />
             </div>
 
             <div className="space-y-2">
               <Label>Confirm Password</Label>
-              <Input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required />
+              <Input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                minLength={6}
+              />
             </div>
 
             <Button type="submit" className="w-full" disabled={loading}>
