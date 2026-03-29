@@ -22,11 +22,10 @@ export default function AdminResetPage() {
 
   useEffect(() => {
     const initializeSession = async () => {
-      const type = searchParams.get("type")
-      const token = searchParams.get("token")
+      // NEW: Supabase sends ?code=...
+      const code = searchParams.get("code")
 
-      // Check if this is a recovery flow
-      if (type !== "recovery" || !token) {
+      if (!code) {
         setError("Invalid or missing recovery link. Please request a new password reset.")
         setInitializing(false)
         return
@@ -34,9 +33,9 @@ export default function AdminResetPage() {
 
       try {
         const supabase = createClient()
-        
-        // Exchange the token for a session
-        const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(token)
+
+        // NEW: use the code directly
+        const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
 
         if (exchangeError) {
           setError("Invalid or expired recovery link. Please request a new password reset.")
@@ -44,7 +43,6 @@ export default function AdminResetPage() {
           return
         }
 
-        // Session is valid, allow password reset
         setSessionValid(true)
         setInitializing(false)
       } catch (err) {
@@ -61,13 +59,11 @@ export default function AdminResetPage() {
     setError("")
     setSuccess("")
 
-    // Validate passwords match
     if (newPassword !== confirmPassword) {
       setError("Passwords do not match.")
       return
     }
 
-    // Validate password length
     if (newPassword.length < 6) {
       setError("Password must be at least 6 characters long.")
       return
@@ -77,7 +73,7 @@ export default function AdminResetPage() {
 
     try {
       const supabase = createClient()
-      
+
       const { error: updateError } = await supabase.auth.updateUser({
         password: newPassword,
       })
@@ -93,7 +89,6 @@ export default function AdminResetPage() {
       setError("")
       setLoading(false)
 
-      // Redirect to login after a short delay
       setTimeout(() => {
         router.push("/admin/login")
       }, 2000)
@@ -104,7 +99,6 @@ export default function AdminResetPage() {
     }
   }
 
-  // Show loading state while initializing
   if (initializing) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#F5F1E6] p-4">
@@ -120,7 +114,6 @@ export default function AdminResetPage() {
     )
   }
 
-  // Show error state if session is invalid
   if (!sessionValid) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#F5F1E6] p-4">
@@ -148,7 +141,6 @@ export default function AdminResetPage() {
     )
   }
 
-  // Show password reset form
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#F5F1E6] p-4">
       <Card className="w-full max-w-md">
