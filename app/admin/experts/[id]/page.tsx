@@ -16,7 +16,7 @@ import Link from "next/link"
 
 interface ExpertData {
   id: string
-  user_id: string
+  profile_id: string
   headline: string
   headline_en: string
   headline_fr: string
@@ -52,12 +52,12 @@ export default function ExpertEditPage() {
 
   useEffect(() => {
     const fetchData = async () => {
-      // Fetch expert
+      // Fetch expert with profile
       const { data: expertData } = await supabase
         .from("experts")
         .select(`
           *,
-          users (
+          profiles (
             full_name
           )
         `)
@@ -67,7 +67,7 @@ export default function ExpertEditPage() {
       if (expertData) {
         setExpert({
           id: expertData.id,
-          user_id: expertData.user_id,
+          profile_id: expertData.profile_id,
           headline: expertData.headline || "",
           headline_en: expertData.headline_en || "",
           headline_fr: expertData.headline_fr || "",
@@ -81,7 +81,7 @@ export default function ExpertEditPage() {
           avatar_url: expertData.avatar_url || "",
         })
         setSelectedCategories(expertData.categories || [])
-        setFullName(expertData.users?.full_name || "")
+        setFullName(expertData.profiles?.full_name || "")
       }
 
       // Fetch categories
@@ -122,9 +122,9 @@ export default function ExpertEditPage() {
       })
       .eq("id", expertId)
 
-    // Update user full_name
-    if (expert.user_id) {
-      await supabase.from("users").update({ full_name: fullName }).eq("id", expert.user_id)
+    // Update profile full_name
+    if (expert.profile_id) {
+      await supabase.from("profiles").update({ full_name: fullName }).eq("id", expert.profile_id)
     }
 
     if (expertError) {

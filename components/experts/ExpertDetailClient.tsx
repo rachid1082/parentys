@@ -9,7 +9,7 @@ import { ArrowLeft, Calendar } from "lucide-react"
 
 interface Expert {
   id: string
-  user_id: string
+  profile_id: string
   headline?: string
   bio?: string
   categories?: string[]
@@ -23,10 +23,10 @@ interface Expert {
   bio_ar?: string
 }
 
-interface User {
+interface Profile {
   full_name?: string
   email?: string
-  locale?: string
+  status?: string
 }
 
 interface Category {
@@ -50,12 +50,12 @@ interface Workshop {
 
 interface ExpertDetailClientProps {
   expert: Expert
-  user: User | null
+  profile: Profile | null
   categories: Category[]
   workshops: Workshop[]
 }
 
-export function ExpertDetailClient({ expert, user, categories, workshops }: ExpertDetailClientProps) {
+export function ExpertDetailClient({ expert, profile, categories, workshops }: ExpertDetailClientProps) {
   const { language: lang } = useLanguage()
   const isRTL = lang === "ar"
 
@@ -127,7 +127,7 @@ export function ExpertDetailClient({ expert, user, categories, workshops }: Expe
 
   const getText = (key: keyof typeof uiText) => uiText[key][lang as "en" | "fr" | "ar"] || uiText[key]["en"]
 
-  const expertName = user?.full_name || "Expert"
+  const expertName = profile?.full_name || "Expert"
   const headline = t(expert, "headline")
   const bio = t(expert, "bio")
 

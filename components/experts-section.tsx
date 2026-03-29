@@ -21,8 +21,8 @@ type Expert = {
   bio_fr: string | null
   bio_ar: string | null
   status: string
-  user_id: string
-  users?: {
+  profile_id: string
+  profiles?: {
     full_name: string | null
   }
 }
@@ -38,7 +38,7 @@ export function ExpertsSection() {
         const supabase = createClient()
         const { data, error } = await supabase
           .from("experts")
-          .select("*, users(full_name)")
+          .select("*, profiles(full_name)")
           .eq("status", "approved")
           .limit(4)
 
@@ -87,7 +87,7 @@ export function ExpertsSection() {
         ) : (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {experts.map((expert) => {
-              const name = expert.users?.full_name || "Expert"
+              const name = expert.profiles?.full_name || "Expert"
               const headline = resolveField(expert, "headline", language) || ""
 
               return (

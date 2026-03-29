@@ -74,6 +74,12 @@ export function Navbar() {
         </div>
 
         <div className="flex items-center gap-4">
+          <Link
+            href="/admin/login"
+            className="hidden text-sm font-medium text-foreground hover:text-primary transition-colors font-display md:block"
+          >
+            {language === "fr" ? "Login Partenaires" : "Partners Login"}
+          </Link>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="sm" className="hidden gap-1 md:flex font-display">
@@ -132,6 +138,12 @@ export function Navbar() {
               className="text-sm font-medium text-foreground hover:text-primary transition-colors font-display"
             >
               {t("contact", language)}
+            </Link>
+            <Link
+              href="/admin/login"
+              className="text-sm font-medium text-foreground hover:text-primary transition-colors font-display"
+            >
+              {language === "fr" ? "Login Partenaires" : "Partners Login"}
             </Link>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

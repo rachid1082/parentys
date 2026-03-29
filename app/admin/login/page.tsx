@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import Loading from "./loading"
 
-const REDIRECT_URL = "https://v0-parentys-landing-page.vercel.app/auth/callback"
+const redirectTo = process.env.NEXT_PUBLIC_SITE_URL + "/admin/reset"
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState("")
@@ -51,19 +51,39 @@ export default function AdminLoginPage() {
 
       if (authError) {
         setError("Invalid email or password")
+        setSuccess("")
         setLoading(false)
         return
       }
 
-      const { data: userData, error: userError } = await createClient()
-        .from("users")
-        .select("role")
-        .eq("id", authData.user.id)
+      // Check for approved profile with permissions
+      const supabase = createClient()
+      
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("id, status")
+        .eq("user_id", authData.user.id)
+        .eq("status", "approved")
         .single()
 
-      if (userError || !userData || userData.role !== "admin") {
-        await createClient().auth.signOut()
+      if (!profile) {
+        await supabase.auth.signOut()
+        setError("Access denied. Approved profile required.")
+        setSuccess("")
+        setLoading(false)
+        return
+      }
+
+      // Check if profile has any admin permissions
+      const { data: permissions } = await supabase
+        .from("profile_permissions")
+        .select("permission")
+        .eq("profile_id", profile.id)
+
+      if (!permissions || permissions.length === 0) {
+        await supabase.auth.signOut()
         setError("Access denied. Admin privileges required.")
+        setSuccess("")
         setLoading(false)
         return
       }
@@ -72,6 +92,7 @@ export default function AdminLoginPage() {
       router.refresh()
     } catch {
       setError("An error occurred. Please try again.")
+      setSuccess("")
       setLoading(false)
     }
   }
@@ -81,22 +102,17 @@ export default function AdminLoginPage() {
     setError("")
     setSuccess("")
     setLoading(true)
-
     try {
-      const { error: resetError } = await createClient().auth.resetPasswordForEmail(email, {
-        redirectTo: REDIRECT_URL,
-      })
-
-      if (resetError) {
-        setError("Failed to send recovery email. Please try again.")
-        setLoading(false)
-        return
-      }
-
-      setSuccess("Password recovery email sent. Check your inbox.")
+      // Supabase may return an error even when the email is sent.
+      await createClient().auth.resetPasswordForEmail(email, { redirectTo })
+      // Always show success unless the request throws.
+      setSuccess("A recovery email has been sent.")
+      setError("")
       setLoading(false)
-    } catch {
-      setError("An error occurred. Please try again.")
+    } catch (err) {
+      // Only true exceptions are real failures.
+      setError("Failed to send recovery email.")
+      setSuccess("")
       setLoading(false)
     }
   }
@@ -120,8 +136,11 @@ export default function AdminLoginPage() {
           </CardHeader>
           <CardContent>
             <form onSubmit={mode === "login" ? handleLogin : handleForgotPassword} className="space-y-4">
-              {error && <div className="p-3 text-sm text-red-600 bg-red-50 rounded-lg">{error}</div>}
-              {success && <div className="p-3 text-sm text-green-600 bg-green-50 rounded-lg">{success}</div>}
+              {error ? (
+                <div className="p-3 text-sm text-red-600 bg-red-50 rounded-lg">{error}</div>
+              ) : success ? (
+                <div className="p-3 text-sm text-green-600 bg-green-50 rounded-lg">{success}</div>
+              ) : null}
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <Input

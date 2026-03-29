@@ -11,12 +11,12 @@ export default async function ExpertDetailPage({ params }: ExpertDetailPageProps
   const { id } = await params
   const supabase = await createServerSupabaseClient()
 
-  // Fetch expert with user data
+  // Fetch expert with profile data
   const { data: expert, error: expertError } = await supabase
     .from("experts")
     .select(`
       id,
-      user_id,
+      profile_id,
       headline,
       bio,
       categories,
@@ -38,17 +38,17 @@ export default async function ExpertDetailPage({ params }: ExpertDetailPageProps
     notFound()
   }
 
-  // Fetch user data for full_name
-  const { data: user } = await supabase
-    .from("users")
-    .select("full_name, email, locale")
-    .eq("id", expert.user_id)
+  // Fetch profile data for full_name
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("full_name, email, status")
+    .eq("id", expert.profile_id)
     .single()
 
   // Fetch categories for labels
   const { data: categoriesData } = await supabase.from("categories").select("slug, label, label_en, label_fr, label_ar")
 
-  // Fetch published workshops by this expert
+  // Fetch published workshops by this expert's profile
   const { data: workshops } = await supabase
     .from("workshops")
     .select(`
@@ -61,14 +61,14 @@ export default async function ExpertDetailPage({ params }: ExpertDetailPageProps
       starts_at,
       status
     `)
-    .eq("expert_id", expert.id)
+    .eq("profile_id", expert.profile_id)
     .eq("status", "published")
     .order("starts_at", { ascending: true })
 
   return (
     <>
       <Navbar />
-      <ExpertDetailClient expert={expert} user={user} categories={categoriesData || []} workshops={workshops || []} />
+      <ExpertDetailClient expert={expert} profile={profile} categories={categoriesData || []} workshops={workshops || []} />
     </>
   )
 }

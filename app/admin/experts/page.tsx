@@ -13,14 +13,14 @@ import { Loader2, MoreHorizontal, Pencil, Trash2, CheckCircle, XCircle } from "l
 
 interface Expert {
   id: string
-  user_id: string
+  profile_id: string
   headline: string | null
   bio: string | null
   categories: string[] | null
   status: string
   avatar_url: string | null
   created_at: string
-  users: {
+  profiles: {
     full_name: string | null
     email: string | null
   } | null
@@ -36,14 +36,14 @@ export default function ExpertsListPage() {
       .from("experts")
       .select(`
         id,
-        user_id,
+        profile_id,
         headline,
         bio,
         categories,
         status,
         avatar_url,
         created_at,
-        users (
+        profiles (
           full_name,
           email
         )
@@ -128,18 +128,18 @@ export default function ExpertsListPage() {
                         {expert.avatar_url ? (
                           <img
                             src={expert.avatar_url || "/placeholder.svg"}
-                            alt={expert.users?.full_name || "Expert"}
+                            alt={expert.profiles?.full_name || "Expert"}
                             className="h-10 w-10 rounded-full object-cover"
                           />
                         ) : (
                           <div className="h-10 w-10 rounded-full bg-[#C9CEC0] flex items-center justify-center text-[#333333] font-medium">
-                            {expert.users?.full_name?.charAt(0) || "?"}
+                            {expert.profiles?.full_name?.charAt(0) || "?"}
                           </div>
                         )}
-                        <span className="font-medium">{expert.users?.full_name || "Unknown"}</span>
+                        <span className="font-medium">{expert.profiles?.full_name || "Unknown"}</span>
                       </div>
                     </TableCell>
-                    <TableCell className="text-muted-foreground">{expert.users?.email || "—"}</TableCell>
+                    <TableCell className="text-muted-foreground">{expert.profiles?.email || "—"}</TableCell>
                     <TableCell className="max-w-[200px] truncate">{expert.headline || "—"}</TableCell>
                     <TableCell>
                       <div className="flex flex-wrap gap-1">
