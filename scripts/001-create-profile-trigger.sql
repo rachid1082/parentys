@@ -1,19 +1,20 @@
 -- SQL trigger for auto-creating profiles when users sign up
 -- Run this in Supabase SQL Editor
 
--- First, ensure the profiles table has the correct columns
--- (This assumes the table already exists with these columns)
--- ALTER TABLE profiles ADD COLUMN IF NOT EXISTS role TEXT DEFAULT 'expert';
--- ALTER TABLE profiles ADD COLUMN IF NOT EXISTS is_admin BOOLEAN DEFAULT false;
+-- Step 1: Add missing columns to profiles table if they don't exist
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS role TEXT DEFAULT 'expert';
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS is_admin BOOLEAN DEFAULT false;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW();
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
 
--- Create the function that will be called by the trigger
+-- Step 2: Create the function that will be called by the trigger
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO public.profiles (user_id, email, role, status, is_admin, created_at, updated_at)
+  INSERT INTO public.profiles (user_id, full_name, role, status, is_admin, created_at, updated_at)
   VALUES (
     NEW.id,
-    NEW.email,
+    COALESCE(NEW.raw_user_meta_data->>'full_name', ''),
     COALESCE(NEW.raw_user_meta_data->>'role', 'expert'),
     'pending',
     false,
@@ -24,19 +25,20 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Drop the trigger if it exists (to avoid duplicates)
+-- Step 3: Drop the trigger if it exists (to avoid duplicates)
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 
--- Create the trigger
+-- Step 4: Create the trigger
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
--- Bootstrap: Create profile for the root admin user if not exists
-INSERT INTO public.profiles (user_id, email, role, status, is_admin, created_at, updated_at)
+-- Step 5: Bootstrap - Create/update profile for the root admin user
+-- First check what columns exist and insert accordingly
+INSERT INTO public.profiles (user_id, full_name, role, status, is_admin, created_at, updated_at)
 VALUES (
   '32ce58a9-e706-4ffd-88e4-fc61dcef8539',
-  'rachid.boukizou@gmail.com',
+  'Rachid Boukizou',
   'admin',
   'approved',
   true,
