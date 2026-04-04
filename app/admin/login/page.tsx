@@ -108,8 +108,10 @@ export default function AdminLoginPage() {
 
       router.push("/admin")
       router.refresh()
-    } catch {
-      setError("An error occurred. Please try again.")
+    } catch (err) {
+      console.error("[v0] Login error:", err)
+      const errorMessage = err instanceof Error ? err.message : "An error occurred. Please try again."
+      setError(errorMessage)
       setSuccess("")
       setLoading(false)
     }
