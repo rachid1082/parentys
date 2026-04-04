@@ -1,7 +1,9 @@
 -- SQL trigger for auto-creating profiles when users sign up
 -- Run this in Supabase SQL Editor
 
--- Step 1: Add missing columns to profiles table if they don't exist
+-- Step 1: Add ALL missing columns to profiles table
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS full_name TEXT;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'pending';
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS role TEXT DEFAULT 'expert';
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS is_admin BOOLEAN DEFAULT false;
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW();
