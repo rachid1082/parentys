@@ -75,7 +75,7 @@ export function Navbar() {
 
         <div className="flex items-center gap-4">
           <Link
-            href="/admin/login"
+            href="/bo/login"
             className="hidden text-sm font-medium text-foreground hover:text-primary transition-colors font-display md:block"
           >
             {language === "fr" ? "Login Partenaires" : "Partners Login"}
@@ -140,7 +140,7 @@ export function Navbar() {
               {t("contact", language)}
             </Link>
             <Link
-              href="/admin/login"
+              href="/bo/login"
               className="text-sm font-medium text-foreground hover:text-primary transition-colors font-display"
             >
               {language === "fr" ? "Login Partenaires" : "Partners Login"}
