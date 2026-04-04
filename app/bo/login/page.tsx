@@ -10,7 +10,13 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
-const redirectTo = process.env.NEXT_PUBLIC_SITE_URL + "/bo/reset"
+// Use window.location.origin for preview environments, fallback to env var for production
+const getRedirectUrl = () => {
+  if (typeof window !== "undefined") {
+    return `${window.location.origin}/bo/reset`
+  }
+  return `${process.env.NEXT_PUBLIC_SITE_URL || ""}/bo/reset`
+}
 
 export default function BOLoginPage() {
   const [email, setEmail] = useState("")
@@ -119,6 +125,8 @@ export default function BOLoginPage() {
     setLoading(true)
 
     try {
+      const redirectTo = getRedirectUrl()
+      console.log("[v0] Reset password redirectTo:", redirectTo)
       await createClient().auth.resetPasswordForEmail(email, { redirectTo })
       setSuccess("A recovery email has been sent.")
       setError("")
