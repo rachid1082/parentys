@@ -1,217 +1,102 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { useState, useEffect, Suspense } from "react"
-import { useRouter } from "next/navigation"
-import { createClient } from "@/lib/supabase"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { useEffect, useState } from "react";
+import { createClient } from "@/utils/supabase/client";
 
-function ResetPasswordForm() {
-  const [password, setPassword] = useState("")
-  const [confirmPassword, setConfirmPassword] = useState("")
-  const [error, setError] = useState("")
-  const [success, setSuccess] = useState("")
-  const [loading, setLoading] = useState(false)
-  const [validatingToken, setValidatingToken] = useState(true)
-  const [tokenValid, setTokenValid] = useState(false)
-  const router = useRouter()
+export default function ResetPasswordPage() {
+  const [status, setStatus] = useState<"idle" | "processing" | "error" | "success">("idle");
+  const [message, setMessage] = useState<string>("");
+
+  // Logging helper
+  const log = (...args: any[]) => console.log("[RESET DEBUG]", ...args);
 
   useEffect(() => {
-    const validateToken = async () => {
-      console.log("---- RESET PAGE DEBUG ----")
-      console.log("WINDOW LOCATION:", window.location.href)
-      console.log("HASH RAW:", window.location.hash)
+    log("Component mounted");
 
-      const hash = window.location.hash
-      const params = new URLSearchParams(hash.replace("#", ""))
+    // Ensure this only runs client-side
+    if (typeof window === "undefined") {
+      log("Window undefined — aborting");
+      return;
+    }
 
-      const accessToken = params.get("access_token")
-      const type = params.get("type")
+    const supabase = createClient();
+    log("Supabase client created");
 
-      console.log("EXTRACTED access_token:", accessToken)
-      console.log("EXTRACTED type:", type)
+    const hash = window.location.hash;
+    log("WINDOW LOCATION:", window.location.href);
+    log("HASH RAW:", hash);
 
-      if (type !== "recovery" || !accessToken) {
-        console.error("❌ Invalid token structure")
-        setError("Invalid reset link. Please request a new password reset.")
-        setTokenValid(false)
-        setValidatingToken(false)
-        return
-      }
+    if (!hash || hash.length < 10) {
+      log("No hash found — aborting");
+      setStatus("error");
+      setMessage("Invalid or missing reset token.");
+      return;
+    }
+
+    const params = new URLSearchParams(hash.replace("#", ""));
+    const accessToken = params.get("access_token");
+    const type = params.get("type");
+
+    log("EXTRACTED access_token:", accessToken);
+    log("EXTRACTED type:", type);
+
+    if (!accessToken || type !== "recovery") {
+      log("Missing token or wrong type — aborting");
+      setStatus("error");
+      setMessage("Invalid or expired reset link.");
+      return;
+    }
+
+    setStatus("processing");
+    setMessage("Validating reset link…");
+
+    // Delay to avoid hydration race conditions
+    setTimeout(async () => {
+      log("Starting PKCE exchange after delay");
 
       try {
-        const supabase = createClient()
+        const { data, error } = await supabase.auth.exchangeCodeForSession(accessToken);
 
-        console.log("Calling exchangeCodeForSession with token:", accessToken.slice(0, 10) + "…")
-
-        const { error } = await supabase.auth.exchangeCodeForSession(accessToken)
+        log("exchangeCodeForSession RESULT:", { data, error });
 
         if (error) {
-          console.error("❌ exchangeCodeForSession ERROR:", error)
-          setError("Invalid or expired reset link. Please request a new one.")
-          setTokenValid(false)
-        } else {
-          console.log("✔ Token validated successfully")
-          setTokenValid(true)
+          log("PKCE ERROR:", error);
+          setStatus("error");
+          setMessage("Invalid or expired reset link.");
+          return;
         }
+
+        log("PKCE SUCCESS — session established:", data);
+        setStatus("success");
+        setMessage("Reset link validated. You may now set a new password.");
+
       } catch (err) {
-        console.error("❌ Unexpected error during token validation:", err)
-        setError("Failed to validate reset link.")
-        setTokenValid(false)
+        log("UNEXPECTED EXCEPTION:", err);
+        setStatus("error");
+        setMessage("Unexpected error during password reset.");
       }
+    }, 250); // 250ms avoids hydration issues
 
-      setValidatingToken(false)
-    }
-
-    validateToken()
-  }, [])
-
-  const handleResetPassword = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError("")
-    setSuccess("")
-
-    if (password !== confirmPassword) {
-      setError("Passwords do not match.")
-      return
-    }
-
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters long.")
-      return
-    }
-
-    setLoading(true)
-
-    try {
-      const supabase = createClient()
-      console.log("Updating password…")
-
-      const { error: updateError } = await supabase.auth.updateUser({ password })
-
-      if (updateError) {
-        console.error("❌ updateUser ERROR:", updateError)
-        setError(updateError.message || "Failed to update password.")
-        setSuccess("")
-        setLoading(false)
-        return
-      }
-
-      console.log("✔ Password updated successfully")
-
-      setSuccess("Password updated successfully! Redirecting to login...")
-      setError("")
-
-      await supabase.auth.signOut()
-
-      setTimeout(() => {
-        router.push("/bo/login")
-      }, 2000)
-    } catch (err) {
-      console.error("❌ Unexpected error during password update:", err)
-      setError("An error occurred. Please try again.")
-      setSuccess("")
-      setLoading(false)
-    }
-  }
-
-  if (validatingToken) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#F5F1E6] p-4">
-        <Card className="w-full max-w-md">
-          <CardContent className="pt-6">
-            <div className="flex flex-col items-center gap-4">
-              <div className="w-8 h-8 border-4 border-[#878D73] border-t-transparent rounded-full animate-spin" />
-              <p className="text-sm text-muted-foreground">Validating reset link...</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
+  }, []);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#F5F1E6] p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <img
-            src="https://tznhipxlrohslxbrdrnm.supabase.co/storage/v1/object/public/assets/brand/logo/main/Main%20Logo%20Parentys.jpg"
-            alt="Parentys"
-            className="h-12 mx-auto mb-4"
-          />
-          <CardTitle className="font-display text-2xl">Reset Password</CardTitle>
-          <CardDescription>
-            {tokenValid ? "Enter your new password below" : "Unable to reset password"}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {!tokenValid ? (
-            <div className="space-y-4">
-              <div className="p-3 text-sm text-red-600 bg-red-50 rounded-lg">{error}</div>
-              <Button onClick={() => router.push("/bo/login")} className="w-full">
-                Back to Login
-              </Button>
-            </div>
-          ) : (
-            <form onSubmit={handleResetPassword} className="space-y-4">
-              {error ? (
-                <div className="p-3 text-sm text-red-600 bg-red-50 rounded-lg">{error}</div>
-              ) : success ? (
-                <div className="p-3 text-sm text-green-600 bg-green-50 rounded-lg">{success}</div>
-              ) : null}
+    <div style={{ padding: 40 }}>
+      <h1>Reset Password</h1>
 
-              <div className="space-y-2">
-                <Label htmlFor="password">New Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="At least 6 characters"
-                  required
-                  minLength={6}
-                  disabled={!!success}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm New Password</Label>
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Confirm your new password"
-                  required
-                  minLength={6}
-                  disabled={!!success}
-                />
-              </div>
-
-              <Button type="submit" className="w-full" disabled={loading || !!success}>
-                {loading ? "Updating..." : "Update Password"}
-              </Button>
-            </form>
-          )}
-        </CardContent>
-      </Card>
+      {status === "idle" && <p>Preparing reset flow…</p>}
+      {status === "processing" && <p>{message}</p>}
+      {status === "success" && (
+        <p>
+          {message}
+          <br />
+          You can now enter your new password.
+        </p>
+      )}
+      {status === "error" && (
+        <p style={{ color: "red" }}>
+          {message}
+        </p>
+      )}
     </div>
-  )
-}
-
-export default function BOResetPage() {
-  return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#F5F1E6] p-4">
-          <div className="w-8 h-8 border-4 border-[#878D73] border-t-transparent rounded-full animate-spin" />
-        </div>
-      }
-    >
-      <ResetPasswordForm />
-    </Suspense>
-  )
+  );
 }
