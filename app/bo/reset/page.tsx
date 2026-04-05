@@ -21,31 +21,44 @@ function ResetPasswordForm() {
 
   useEffect(() => {
     const validateToken = async () => {
+      console.log("---- RESET PAGE DEBUG ----")
+      console.log("WINDOW LOCATION:", window.location.href)
+      console.log("HASH RAW:", window.location.hash)
+
+      const hash = window.location.hash
+      const params = new URLSearchParams(hash.replace("#", ""))
+
+      const accessToken = params.get("access_token")
+      const type = params.get("type")
+
+      console.log("EXTRACTED access_token:", accessToken)
+      console.log("EXTRACTED type:", type)
+
+      if (type !== "recovery" || !accessToken) {
+        console.error("❌ Invalid token structure")
+        setError("Invalid reset link. Please request a new password reset.")
+        setTokenValid(false)
+        setValidatingToken(false)
+        return
+      }
+
       try {
-        // Extract PKCE token from hash fragment
-        const hash = window.location.hash
-        const params = new URLSearchParams(hash.replace("#", ""))
-
-        const accessToken = params.get("access_token")
-        const type = params.get("type")
-
-        if (type !== "recovery" || !accessToken) {
-          setError("Invalid reset link. Please request a new password reset.")
-          setTokenValid(false)
-          setValidatingToken(false)
-          return
-        }
-
         const supabase = createClient()
+
+        console.log("Calling exchangeCodeForSession with token:", accessToken.slice(0, 10) + "…")
+
         const { error } = await supabase.auth.exchangeCodeForSession(accessToken)
 
         if (error) {
+          console.error("❌ exchangeCodeForSession ERROR:", error)
           setError("Invalid or expired reset link. Please request a new one.")
           setTokenValid(false)
         } else {
+          console.log("✔ Token validated successfully")
           setTokenValid(true)
         }
-      } catch {
+      } catch (err) {
+        console.error("❌ Unexpected error during token validation:", err)
         setError("Failed to validate reset link.")
         setTokenValid(false)
       }
@@ -75,14 +88,19 @@ function ResetPasswordForm() {
 
     try {
       const supabase = createClient()
+      console.log("Updating password…")
+
       const { error: updateError } = await supabase.auth.updateUser({ password })
 
       if (updateError) {
+        console.error("❌ updateUser ERROR:", updateError)
         setError(updateError.message || "Failed to update password.")
         setSuccess("")
         setLoading(false)
         return
       }
+
+      console.log("✔ Password updated successfully")
 
       setSuccess("Password updated successfully! Redirecting to login...")
       setError("")
@@ -92,7 +110,8 @@ function ResetPasswordForm() {
       setTimeout(() => {
         router.push("/bo/login")
       }, 2000)
-    } catch {
+    } catch (err) {
+      console.error("❌ Unexpected error during password update:", err)
       setError("An error occurred. Please try again.")
       setSuccess("")
       setLoading(false)
