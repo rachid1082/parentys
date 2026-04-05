@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { useState, useEffect, Suspense } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -18,37 +18,43 @@ function ResetPasswordForm() {
   const [validatingToken, setValidatingToken] = useState(true)
   const [tokenValid, setTokenValid] = useState(false)
   const router = useRouter()
-  const searchParams = useSearchParams()
 
   useEffect(() => {
     const validateToken = async () => {
-      const token = searchParams.get("token") || searchParams.get("code")
-      const type = searchParams.get("type")
+      try {
+        // Extract PKCE token from hash fragment
+        const hash = window.location.hash
+        const params = new URLSearchParams(hash.replace("#", ""))
 
-      if (type === "recovery" && token) {
-        try {
-          const supabase = createClient()
-          const { error } = await supabase.auth.exchangeCodeForSession(token)
-          
-          if (error) {
-            setError("Invalid or expired reset link. Please request a new one.")
-            setTokenValid(false)
-          } else {
-            setTokenValid(true)
-          }
-        } catch {
-          setError("Failed to validate reset link.")
+        const accessToken = params.get("access_token")
+        const type = params.get("type")
+
+        if (type !== "recovery" || !accessToken) {
+          setError("Invalid reset link. Please request a new password reset.")
           setTokenValid(false)
+          setValidatingToken(false)
+          return
         }
-      } else {
-        setError("Invalid reset link. Please request a new password reset.")
+
+        const supabase = createClient()
+        const { error } = await supabase.auth.exchangeCodeForSession(accessToken)
+
+        if (error) {
+          setError("Invalid or expired reset link. Please request a new one.")
+          setTokenValid(false)
+        } else {
+          setTokenValid(true)
+        }
+      } catch {
+        setError("Failed to validate reset link.")
         setTokenValid(false)
       }
+
       setValidatingToken(false)
     }
 
     validateToken()
-  }, [searchParams])
+  }, [])
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -80,9 +86,9 @@ function ResetPasswordForm() {
 
       setSuccess("Password updated successfully! Redirecting to login...")
       setError("")
-      
+
       await supabase.auth.signOut()
-      
+
       setTimeout(() => {
         router.push("/bo/login")
       }, 2000)
@@ -126,10 +132,7 @@ function ResetPasswordForm() {
           {!tokenValid ? (
             <div className="space-y-4">
               <div className="p-3 text-sm text-red-600 bg-red-50 rounded-lg">{error}</div>
-              <Button
-                onClick={() => router.push("/bo/login")}
-                className="w-full"
-              >
+              <Button onClick={() => router.push("/bo/login")} className="w-full">
                 Back to Login
               </Button>
             </div>
@@ -140,6 +143,7 @@ function ResetPasswordForm() {
               ) : success ? (
                 <div className="p-3 text-sm text-green-600 bg-green-50 rounded-lg">{success}</div>
               ) : null}
+
               <div className="space-y-2">
                 <Label htmlFor="password">New Password</Label>
                 <Input
@@ -153,6 +157,7 @@ function ResetPasswordForm() {
                   disabled={!!success}
                 />
               </div>
+
               <div className="space-y-2">
                 <Label htmlFor="confirmPassword">Confirm New Password</Label>
                 <Input
@@ -166,6 +171,7 @@ function ResetPasswordForm() {
                   disabled={!!success}
                 />
               </div>
+
               <Button type="submit" className="w-full" disabled={loading || !!success}>
                 {loading ? "Updating..." : "Update Password"}
               </Button>
@@ -179,11 +185,13 @@ function ResetPasswordForm() {
 
 export default function BOResetPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-[#F5F1E6] p-4">
-        <div className="w-8 h-8 border-4 border-[#878D73] border-t-transparent rounded-full animate-spin" />
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-[#F5F1E6] p-4">
+          <div className="w-8 h-8 border-4 border-[#878D73] border-t-transparent rounded-full animate-spin" />
+        </div>
+      }
+    >
       <ResetPasswordForm />
     </Suspense>
   )
