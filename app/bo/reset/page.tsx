@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createClient } from "@/utils/supabase-browser"; // <-- FIX THIS PATH
+import { createClient } from "@/src/utils/supabase-browser"; // <-- THIS IS THE CORRECT PATH
 
 export default function ResetPasswordPage() {
   const [status, setStatus] = useState<"idle" | "processing" | "error" | "success">("idle");
@@ -48,6 +48,7 @@ export default function ResetPasswordPage() {
     setStatus("processing");
     setMessage("Validating reset link…");
 
+    // Delay avoids hydration race conditions
     setTimeout(async () => {
       log("Starting PKCE exchange after delay");
 
