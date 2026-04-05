@@ -1,19 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createClient } from "@/utils/supabase/client";
+import { createClient } from "@/utils/supabase-browser"; // <-- FIX THIS PATH
 
 export default function ResetPasswordPage() {
   const [status, setStatus] = useState<"idle" | "processing" | "error" | "success">("idle");
   const [message, setMessage] = useState<string>("");
 
-  // Logging helper
   const log = (...args: any[]) => console.log("[RESET DEBUG]", ...args);
 
   useEffect(() => {
     log("Component mounted");
 
-    // Ensure this only runs client-side
     if (typeof window === "undefined") {
       log("Window undefined — aborting");
       return;
@@ -50,7 +48,6 @@ export default function ResetPasswordPage() {
     setStatus("processing");
     setMessage("Validating reset link…");
 
-    // Delay to avoid hydration race conditions
     setTimeout(async () => {
       log("Starting PKCE exchange after delay");
 
@@ -75,7 +72,7 @@ export default function ResetPasswordPage() {
         setStatus("error");
         setMessage("Unexpected error during password reset.");
       }
-    }, 250); // 250ms avoids hydration issues
+    }, 250);
 
   }, []);
 
