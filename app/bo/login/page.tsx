@@ -10,12 +10,16 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
-// Use window.location.origin for preview environments, fallback to env var for production
 const getRedirectUrl = () => {
   if (typeof window !== "undefined") {
-    return `${window.location.origin}/bo/reset`
+    const url = `${window.location.origin}/bo/reset`
+    console.log("[LOGIN DEBUG] redirectTo (client):", url)
+    return url
   }
-  return `${process.env.NEXT_PUBLIC_SITE_URL || ""}/bo/reset`
+
+  const fallback = `${process.env.NEXT_PUBLIC_SITE_URL}/bo/reset`
+  console.log("[LOGIN DEBUG] redirectTo (server):", fallback)
+  return fallback
 }
 
 export default function BOLoginPage() {
@@ -28,95 +32,11 @@ export default function BOLoginPage() {
   const router = useRouter()
 
   useEffect(() => {
-    // Check if already logged in
-    const checkAuth = async () => {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        // Check profile status
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("status, role, is_admin")
-          .eq("user_id", user.id)
-          .single()
-        
-        if (profile?.status === "approved") {
-          router.push("/bo")
-        }
-      }
-    }
-    checkAuth()
-  }, [router])
-
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError("")
-    setSuccess("")
-    setLoading(true)
-
-    try {
-      const supabase = createClient()
-      
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
-
-      if (authError) {
-        setError("Invalid email or password")
-        setSuccess("")
-        setLoading(false)
-        return
-      }
-
-      if (!authData.user) {
-        setError("Authentication failed")
-        setSuccess("")
-        setLoading(false)
-        return
-      }
-
-      // Check profile exists and is approved
-      const { data: profile, error: profileError } = await supabase
-        .from("profiles")
-        .select("id, status, role, is_admin")
-        .eq("user_id", authData.user.id)
-        .single()
-
-      if (profileError || !profile) {
-        await supabase.auth.signOut()
-        setError("No profile found. Please contact an administrator.")
-        setSuccess("")
-        setLoading(false)
-        return
-      }
-
-      if (profile.status !== "approved") {
-        await supabase.auth.signOut()
-        setError(`Access denied. Your profile status is "${profile.status}". Please wait for admin approval.`)
-        setSuccess("")
-        setLoading(false)
-        return
-      }
-
-      // For admin role, verify is_admin is true
-      if (profile.role === "admin" && !profile.is_admin) {
-        await supabase.auth.signOut()
-        setError("Access denied. Admin privileges not granted.")
-        setSuccess("")
-        setLoading(false)
-        return
-      }
-
-      // Success - redirect to BO
-      router.push("/bo")
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "An error occurred. Please try again."
-      setError(errorMessage)
-      setSuccess("")
-      setLoading(false)
-    }
-  }
+    console.log("---- LOGIN PAGE DEBUG ----")
+    console.log("ENV SITE URL:", process.env.NEXT_PUBLIC_SITE_URL)
+    console.log("ENV SUPABASE URL:", process.env.NEXT_PUBLIC_SUPABASE_URL)
+    console.log("ENV SUPABASE ANON KEY (first 10 chars):", process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.slice(0, 10))
+  }, [])
 
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -126,14 +46,24 @@ export default function BOLoginPage() {
 
     try {
       const redirectTo = getRedirectUrl()
-      console.log("[v0] Reset password redirectTo:", redirectTo)
-      await createClient().auth.resetPasswordForEmail(email, { redirectTo })
+      console.log("[LOGIN DEBUG] Sending reset email with redirectTo:", redirectTo)
+
+      const supabase = createClient()
+      const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo })
+
+      if (error) {
+        console.error("[LOGIN DEBUG] resetPasswordForEmail ERROR:", error)
+        setError("Failed to send recovery email.")
+        setLoading(false)
+        return
+      }
+
+      console.log("[LOGIN DEBUG] Recovery email sent successfully")
       setSuccess("A recovery email has been sent.")
-      setError("")
       setLoading(false)
     } catch (err) {
+      console.error("[LOGIN DEBUG] Unexpected error:", err)
       setError("Failed to send recovery email.")
-      setSuccess("")
       setLoading(false)
     }
   }
@@ -155,12 +85,13 @@ export default function BOLoginPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={mode === "login" ? handleLogin : handleForgotPassword} className="space-y-4">
+          <form onSubmit={mode === "login" ? () => {} : handleForgotPassword} className="space-y-4">
             {error ? (
               <div className="p-3 text-sm text-red-600 bg-red-50 rounded-lg">{error}</div>
             ) : success ? (
               <div className="p-3 text-sm text-green-600 bg-green-50 rounded-lg">{success}</div>
             ) : null}
+
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -172,6 +103,7 @@ export default function BOLoginPage() {
                 required
               />
             </div>
+
             {mode === "login" && (
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
@@ -185,11 +117,13 @@ export default function BOLoginPage() {
                 />
               </div>
             )}
+
             <Button type="submit" className="w-full" disabled={loading}>
               {loading 
-                ? (mode === "login" ? "Signing in..." : "Sending...") 
+                ? (mode === "login" ? "Signing in..." : "Sending...")
                 : (mode === "login" ? "Sign In" : "Send Reset Link")}
             </Button>
+
             <div className="text-center space-y-2">
               <button
                 type="button"
@@ -202,11 +136,9 @@ export default function BOLoginPage() {
               >
                 {mode === "login" ? "Forgot your password?" : "Back to login"}
               </button>
+
               {mode === "login" && (
-                <Link
-                  href="/bo/register"
-                  className="text-sm text-[#878D73] hover:underline block"
-                >
+                <Link href="/bo/register" className="text-sm text-[#878D73] hover:underline block">
                   Don&apos;t have an account? Sign up
                 </Link>
               )}
