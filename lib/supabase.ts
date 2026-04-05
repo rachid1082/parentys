@@ -1,5 +1,5 @@
 // lib/supabase.ts
-import { createBrowserClient, createServerClient } from "@supabase/ssr";
+import { createBrowserClient } from "@supabase/ssr";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -11,25 +11,6 @@ export function createClient(): SupabaseClient {
     auth: {
       flowType: "pkce",
       detectSessionInUrl: false,
-    },
-  });
-}
-
-// OPTIONAL: server-side client (if needed elsewhere)
-export function createServerSupabaseClient(cookies: () => string) {
-  return createServerClient(supabaseUrl, supabaseAnonKey, {
-    cookies: {
-      getAll() {
-        return cookies()
-          .split(";")
-          .map((c) => {
-            const [name, ...rest] = c.trim().split("=");
-            return { name, value: rest.join("=") };
-          });
-      },
-      setAll() {
-        // no-op unless you need SSR auth
-      },
     },
   });
 }
