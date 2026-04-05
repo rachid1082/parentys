@@ -1,24 +1,35 @@
-"use client"
+// lib/supabase.ts
+import { createBrowserClient, createServerClient } from "@supabase/ssr";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
-import { createBrowserClient } from "@supabase/ssr"
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
-export function createClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+// BROWSER CLIENT (PKCE)
+export function createClient(): SupabaseClient {
+  return createBrowserClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      flowType: "pkce",
+      detectSessionInUrl: false,
+    },
+  });
+}
 
-  console.log("---- SUPABASE CLIENT DEBUG ----")
-  console.log("ENV SUPABASE URL:", url)
-  console.log("ENV SUPABASE ANON KEY (first 10 chars):", anon?.slice(0, 10))
-
-  if (!url || !anon) {
-    console.error("❌ Missing Supabase environment variables")
-    throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY")
-  }
-
-  const client = createBrowserClient(url, anon)
-
-  // @ts-ignore
-  console.log("CLIENT SUPABASE URL:", client?.rest?.url)
-
-  return client
+// If you use server-side client elsewhere, keep it here:
+export function createServerSupabaseClient(cookies: () => string) {
+  return createServerClient(supabaseUrl, supabaseAnonKey, {
+    cookies: {
+      getAll() {
+        return cookies()
+          .split(";")
+          .map((c) => {
+            const [name, ...rest] = c.trim().split("=");
+            return { name, value: rest.join("=") };
+          });
+      },
+      setAll() {
+        // no-op here; implement if you actually need SSR auth
+      },
+    },
+  });
 }
