@@ -2,13 +2,20 @@
 
 import { createBrowserClient } from "@supabase/ssr"
 
-// Fallback values for v0 preview environment where env vars may not persist
-const FALLBACK_SUPABASE_URL = "https://eemnjizfrqobmcbcmwjf.supabase.co"
-const FALLBACK_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVlbW5qaXpmcnFvYm1jYmNtd2pmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3OTA4NDEsImV4cCI6MjA5MDM2Njg0MX0.5WHnYyMolTkdbVjO_tKSjAAEoFRz82_oxLvdoZHgvXI"
+// ❗ IMPORTANT:
+// No fallback values. No silent switching.
+// PKCE tokens MUST be validated against the SAME project that issued them.
 
 export function createClient() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || FALLBACK_SUPABASE_URL
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || FALLBACK_SUPABASE_ANON_KEY
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-  return createBrowserClient(supabaseUrl, supabaseKey)
+  if (!url || !anon) {
+    throw new Error(
+      "Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY. " +
+      "These must be set in your environment for PKCE to work."
+    )
+  }
+
+  return createBrowserClient(url, anon)
 }
