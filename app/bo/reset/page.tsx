@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase"; // <-- CORRECT PATH
+import { createClient } from "@/lib/supabase";
 
 export default function ResetPasswordPage() {
   const [status, setStatus] = useState<"idle" | "processing" | "error" | "success">("idle");
@@ -20,6 +20,44 @@ export default function ResetPasswordPage() {
     const supabase = createClient();
     log("Supabase client created");
 
+    // ---- PKCE COOKIE DEBUG ----
+    log("COOKIE DEBUG: document.cookie =", document.cookie);
+
+    try {
+      const cookieNames = document.cookie
+        .split(";")
+        .map((c) => c.trim().split("=")[0]);
+      log("COOKIE DEBUG: cookie names =", cookieNames);
+    } catch (e) {
+      log("COOKIE DEBUG: error reading cookies", e);
+    }
+
+    // Browser detection
+    const ua = navigator.userAgent.toLowerCase();
+    log("BROWSER DEBUG: userAgent =", ua);
+
+    if (ua.includes("safari") && !ua.includes("chrome")) {
+      log("BROWSER DEBUG: Safari detected — may block PKCE cookies");
+    }
+
+    if (ua.includes("brave")) {
+      log("BROWSER DEBUG: Brave detected — may block PKCE cookies");
+    }
+
+    if (navigator.cookieEnabled === false) {
+      log("COOKIE DEBUG: Browser reports cookies disabled");
+    }
+
+    // Private mode detection (Safari)
+    if (navigator.storage && navigator.storage.estimate) {
+      navigator.storage.estimate().then((estimate) => {
+        if (estimate.quota < 120000000) {
+          log("BROWSER DEBUG: Possible private mode — PKCE cookies may be blocked");
+        }
+      });
+    }
+
+    // ---- HASH + TOKEN EXTRACTION ----
     const hash = window.location.hash;
     log("WINDOW LOCATION:", window.location.href);
     log("HASH RAW:", hash);
@@ -74,7 +112,6 @@ export default function ResetPasswordPage() {
         setMessage("Unexpected error during password reset.");
       }
     }, 250);
-
   }, []);
 
   return (
