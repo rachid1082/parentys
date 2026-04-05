@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createClient } from "@/src/utils/supabase-browser"; // <-- THIS IS THE CORRECT PATH
+import { createClient } from "@/lib/supabase"; // <-- CORRECT PATH
 
 export default function ResetPasswordPage() {
   const [status, setStatus] = useState<"idle" | "processing" | "error" | "success">("idle");
