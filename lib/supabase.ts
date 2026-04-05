@@ -2,20 +2,23 @@
 
 import { createBrowserClient } from "@supabase/ssr"
 
-// ❗ IMPORTANT:
-// No fallback values. No silent switching.
-// PKCE tokens MUST be validated against the SAME project that issued them.
-
 export function createClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
   const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
+  console.log("---- SUPABASE CLIENT DEBUG ----")
+  console.log("ENV SUPABASE URL:", url)
+  console.log("ENV SUPABASE ANON KEY (first 10 chars):", anon?.slice(0, 10))
+
   if (!url || !anon) {
-    throw new Error(
-      "Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY. " +
-      "These must be set in your environment for PKCE to work."
-    )
+    console.error("❌ Missing Supabase environment variables")
+    throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY")
   }
 
-  return createBrowserClient(url, anon)
+  const client = createBrowserClient(url, anon)
+
+  // @ts-ignore
+  console.log("CLIENT SUPABASE URL:", client?.rest?.url)
+
+  return client
 }
