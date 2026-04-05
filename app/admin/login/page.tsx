@@ -60,20 +60,38 @@ export default function AdminLoginPage() {
 
       const supabase = createClient()
       
-      const { data: profile } = await supabase
+      console.log("[v0] Auth user ID:", authData.user.id)
+      console.log("[v0] Auth user email:", authData.user.email)
+      
+      // First, check if ANY profile exists for this user (regardless of status)
+      const { data: anyProfile, error: anyProfileError } = await supabase
         .from("profiles")
-        .select("id, status")
+        .select("id, status, user_id, email, full_name")
         .eq("user_id", authData.user.id)
-        .eq("status", "approved")
         .single()
-
-      if (!profile) {
+      
+      console.log("[v0] Profile lookup result:", anyProfile)
+      console.log("[v0] Profile lookup error:", anyProfileError)
+      
+      if (!anyProfile) {
+        // No profile exists at all for this user_id
         await supabase.auth.signOut()
-        setError("Access denied. Approved profile required.")
+        setError("No profile found for this account. Please contact an administrator.")
         setSuccess("")
         setLoading(false)
         return
       }
+      
+      if (anyProfile.status !== "approved") {
+        // Profile exists but is not approved
+        await supabase.auth.signOut()
+        setError(`Access denied. Your profile status is "${anyProfile.status}". Please wait for admin approval.`)
+        setSuccess("")
+        setLoading(false)
+        return
+      }
+      
+      const profile = anyProfile
 
       const { data: permissions } = await supabase
         .from("profile_permissions")
@@ -90,8 +108,10 @@ export default function AdminLoginPage() {
 
       router.push("/admin")
       router.refresh()
-    } catch {
-      setError("An error occurred. Please try again.")
+    } catch (err) {
+      console.error("[v0] Login error:", err)
+      const errorMessage = err instanceof Error ? err.message : "An error occurred. Please try again."
+      setError(errorMessage)
       setSuccess("")
       setLoading(false)
     }

@@ -3,13 +3,14 @@
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase"
-import { LayoutDashboard, Home, Info, Users, Calendar, FolderTree, GitBranch, LogOut } from "lucide-react"
+import { LayoutDashboard, Home, Info, Users, UserCheck, Calendar, FolderTree, GitBranch, LogOut } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const navItems = [
   { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
   { label: "Homepage Content", href: "/admin/homepage", icon: Home },
   { label: "About Page", href: "/admin/about", icon: Info },
+  { label: "Users", href: "/admin/users", icon: UserCheck },
   { label: "Experts", href: "/admin/experts", icon: Users },
   { label: "Workshops", href: "/admin/workshops", icon: Calendar },
   { label: "Categories", href: "/admin/categories", icon: FolderTree },
