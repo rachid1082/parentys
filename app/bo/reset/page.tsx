@@ -32,32 +32,9 @@ export default function ResetPasswordPage() {
       log("COOKIE DEBUG: error reading cookies", e);
     }
 
-    // Browser detection
     const ua = navigator.userAgent.toLowerCase();
     log("BROWSER DEBUG: userAgent =", ua);
 
-    if (ua.includes("safari") && !ua.includes("chrome")) {
-      log("BROWSER DEBUG: Safari detected — may block PKCE cookies");
-    }
-
-    if (ua.includes("brave")) {
-      log("BROWSER DEBUG: Brave detected — may block PKCE cookies");
-    }
-
-    if (navigator.cookieEnabled === false) {
-      log("COOKIE DEBUG: Browser reports cookies disabled");
-    }
-
-    // Private mode detection (Safari)
-    if (navigator.storage && navigator.storage.estimate) {
-      navigator.storage.estimate().then((estimate) => {
-        if (estimate.quota < 120000000) {
-          log("BROWSER DEBUG: Possible private mode — PKCE cookies may be blocked");
-        }
-      });
-    }
-
-    // ---- HASH + TOKEN EXTRACTION ----
     const hash = window.location.hash;
     log("WINDOW LOCATION:", window.location.href);
     log("HASH RAW:", hash);
@@ -86,7 +63,6 @@ export default function ResetPasswordPage() {
     setStatus("processing");
     setMessage("Validating reset link…");
 
-    // Delay avoids hydration race conditions
     setTimeout(async () => {
       log("Starting PKCE exchange after delay");
 
