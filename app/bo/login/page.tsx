@@ -32,11 +32,14 @@ export default function BOLoginPage() {
       if (typeof document !== "undefined" && (document as any).requestStorageAccess) {
         try {
           await (document as any).requestStorageAccess()
+          await new Promise((r) => setTimeout(r, 50)) // ⭐ tiny delay so Firefox applies it
         } catch {}
       }
 
       const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
 
       if (user) {
         const { data: profile } = await supabase
@@ -64,6 +67,7 @@ export default function BOLoginPage() {
       if (typeof document !== "undefined" && (document as any).requestStorageAccess) {
         try {
           await (document as any).requestStorageAccess()
+          await new Promise((r) => setTimeout(r, 50)) // ⭐ same tiny delay
         } catch {}
       }
 
@@ -117,6 +121,7 @@ export default function BOLoginPage() {
       if (typeof document !== "undefined" && (document as any).requestStorageAccess) {
         try {
           await (document as any).requestStorageAccess()
+          await new Promise((r) => setTimeout(r, 50)) // ⭐ same tiny delay
         } catch {}
       }
 
