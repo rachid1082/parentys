@@ -1,169 +1,166 @@
-"use client";
+"use client"
 
-import { useState, useEffect } from "react";
-import { createClient } from "@/lib/supabase";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import type React from "react"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
+import Link from "next/link"
+import { createClient } from "@/lib/supabase"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
+// Use window.location.origin for preview environments, fallback to env var for production
 const getRedirectUrl = () => {
   if (typeof window !== "undefined") {
-    return `${window.location.origin}/bo/reset`;
+    return `${window.location.origin}/bo/reset`
   }
-  return `${process.env.NEXT_PUBLIC_SITE_URL}/bo/reset`;
-};
+  return `${process.env.NEXT_PUBLIC_SITE_URL || ""}/bo/reset`
+}
 
 export default function BOLoginPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  // login | forgot | signup
-  const [mode, setMode] = useState<"login" | "forgot" | "signup">("login");
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [error, setError] = useState("")
+  const [success, setSuccess] = useState("")
+  const [loading, setLoading] = useState(false)
+  const [mode, setMode] = useState<"login" | "forgot">("login")
+  const router = useRouter()
 
   useEffect(() => {
-    console.log("---- LOGIN PAGE DEBUG ----");
-    console.log("ENV SITE URL:", process.env.NEXT_PUBLIC_SITE_URL);
-    console.log("ENV SUPABASE URL:", process.env.NEXT_PUBLIC_SUPABASE_URL);
-    console.log(
-      "ENV SUPABASE ANON KEY (first 10 chars):",
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.slice(0, 10)
-    );
-  }, []);
+    // Check if already logged in
+    const checkAuth = async () => {
+      const supabase = createClient()
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (user) {
+        // Check profile status
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("status, role, is_admin")
+          .eq("user_id", user.id)
+          .single()
 
-  // -------------------------
-  // LOGIN (password-based)
-  // -------------------------
+        if (profile?.status === "approved") {
+          router.push("/bo")
+        }
+      }
+    }
+    checkAuth()
+  }, [router])
+
   const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    setSuccess("");
-    setLoading(true);
+    e.preventDefault()
+    setError("")
+    setSuccess("")
+    setLoading(true)
 
     try {
-      const supabase = createClient();
+      const supabase = createClient()
 
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,
-      });
+      })
 
-      console.log("[LOGIN DEBUG] data:", data);
-      console.log("[LOGIN DEBUG] error:", error);
-
-      if (error) {
-        setError(error.message);
-        setLoading(false);
-        return;
+      if (authError) {
+        setError("Invalid email or password")
+        setSuccess("")
+        setLoading(false)
+        return
       }
 
-      // redirect to BO dashboard
-      window.location.href = "/bo";
-    } catch (err) {
-      console.error(err);
-      setError("Login failed.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // -------------------------
-  // SIGNUP
-  // -------------------------
-  const handleSignup = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    setSuccess("");
-    setLoading(true);
-
-    if (password !== confirmPassword) {
-      setError("Passwords do not match.");
-      setLoading(false);
-      return;
-    }
-
-    try {
-      const supabase = createClient();
-
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-      });
-
-      console.log("[SIGNUP DEBUG] data:", data);
-      console.log("[SIGNUP DEBUG] error:", error);
-
-      if (error) {
-        setError(error.message);
-        setLoading(false);
-        return;
+      if (!authData.user) {
+        setError("Authentication failed")
+        setSuccess("")
+        setLoading(false)
+        return
       }
 
-      setSuccess("Account created. Check your email to confirm.");
-    } catch (err) {
-      console.error(err);
-      setError("Failed to create account.");
-    } finally {
-      setLoading(false);
-    }
-  };
+      // Check profile exists and is approved
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("id, status, role, is_admin")
+        .eq("user_id", authData.user.id)
+        .single()
 
-  // -------------------------
-  // FORGOT PASSWORD (PKCE)
-  // -------------------------
+      if (profileError || !profile) {
+        await supabase.auth.signOut()
+        setError("No profile found. Please contact an administrator.")
+        setSuccess("")
+        setLoading(false)
+        return
+      }
+
+      if (profile.status !== "approved") {
+        await supabase.auth.signOut()
+        setError(`Access denied. Your profile status is "${profile.status}". Please wait for admin approval.`)
+        setSuccess("")
+        setLoading(false)
+        return
+      }
+
+      // For admin role, verify is_admin is true
+      if (profile.role === "admin" && !profile.is_admin) {
+        await supabase.auth.signOut()
+        setError("Access denied. Admin privileges not granted.")
+        setSuccess("")
+        setLoading(false)
+        return
+      }
+
+      // Success - redirect to BO
+      router.push("/bo")
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "An error occurred. Please try again."
+      setError(errorMessage)
+      setSuccess("")
+      setLoading(false)
+    }
+  }
+
   const handleForgotPassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    setSuccess("");
-    setLoading(true);
+    e.preventDefault()
+    setError("")
+    setSuccess("")
+    setLoading(true)
 
     try {
-      if (document.requestStorageAccess) {
+      // PKCE / Firefox storage access safeguard
+      if (typeof document !== "undefined" && (document as any).requestStorageAccess) {
         try {
-          await document.requestStorageAccess();
-          console.log("[LOGIN DEBUG] Storage access granted");
+          await (document as any).requestStorageAccess()
+          console.log("[LOGIN] Storage access granted before resetPasswordForEmail")
         } catch {
-          console.log("[LOGIN DEBUG] Storage access denied");
+          console.log("[LOGIN] Storage access denied before resetPasswordForEmail")
         }
       }
 
-      const redirectTo = getRedirectUrl();
-      const supabase = createClient();
+      const redirectTo = getRedirectUrl()
+      console.log("[v0] Reset password redirectTo:", redirectTo)
+      const supabase = createClient()
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, { redirectTo })
 
-      const { data, error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
-
-      console.log("[RESET EMAIL DEBUG] data:", data);
-      console.log("[RESET EMAIL DEBUG] error:", error);
-
-      if (error) {
-        console.error("[RESET EMAIL ERROR RAW]:", error);
-        console.error("[RESET EMAIL ERROR DETAILS]:", {
-          name: error?.name,
-          message: error?.message,
-          status: (error as any)?.status,
-        });
-
-        setError("Failed to send recovery email.");
-        setLoading(false);
-        return;
+      if (resetError) {
+        console.error("[RESET EMAIL ERROR]", resetError)
+        setError("Failed to send recovery email.")
+        setSuccess("")
+        setLoading(false)
+        return
       }
 
-      setSuccess("A recovery email has been sent.");
+      setSuccess("A recovery email has been sent.")
+      setError("")
+      setLoading(false)
     } catch (err) {
-      console.error(err);
-      setError("Failed to send recovery email.");
-    } finally {
-      setLoading(false);
+      console.error("[RESET EMAIL EXCEPTION]", err)
+      setError("Failed to send recovery email.")
+      setSuccess("")
+      setLoading(false)
     }
-  };
+  }
 
-  // -------------------------
-  // RENDER
-  // -------------------------
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#F5F1E6] p-4">
       <Card className="w-full max-w-md">
@@ -174,35 +171,23 @@ export default function BOLoginPage() {
             className="h-12 mx-auto mb-4"
           />
           <CardTitle className="font-display text-2xl">
-            {mode === "login" && "Back-Office Login"}
-            {mode === "forgot" && "Reset Password"}
-            {mode === "signup" && "Create Account"}
+            {mode === "login" ? "Back-Office Login" : "Reset Password"}
           </CardTitle>
           <CardDescription>
-            {mode === "login" && "Sign in to access the Back-Office"}
-            {mode === "forgot" && "Enter your email to receive a reset link"}
-            {mode === "signup" && "Create a new Back-Office account"}
+            {mode === "login" ? "Sign in to access the Back-Office" : "Enter your email to receive a reset link"}
           </CardDescription>
         </CardHeader>
-
         <CardContent>
-          <form
-            className="space-y-4"
-            onSubmit={(e) => {
-              if (mode === "login") return void handleLogin(e);
-              if (mode === "signup") return void handleSignup(e);
-              if (mode === "forgot") return void handleForgotPassword(e);
-            }}
-          >
-            {error && <div className="p-3 text-sm text-red-600 bg-red-50 rounded-lg">{error}</div>}
-            {success && (
+          <form onSubmit={mode === "login" ? handleLogin : handleForgotPassword} className="space-y-4">
+            {error ? (
+              <div className="p-3 text-sm text-red-600 bg-red-50 rounded-lg">{error}</div>
+            ) : success ? (
               <div className="p-3 text-sm text-green-600 bg-green-50 rounded-lg">{success}</div>
-            )}
-
-            {/* EMAIL */}
+            ) : null}
             <div className="space-y-2">
-              <Label>Email</Label>
+              <Label htmlFor="email">Email</Label>
               <Input
+                id="email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -210,101 +195,49 @@ export default function BOLoginPage() {
                 required
               />
             </div>
-
-            {/* PASSWORD (LOGIN MODE) */}
             {mode === "login" && (
               <div className="space-y-2">
-                <Label>Password</Label>
+                <Label htmlFor="password">Password</Label>
                 <Input
+                  id="password"
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter your password"
                   required
                 />
               </div>
             )}
-
-            {/* PASSWORD + CONFIRM (SIGNUP MODE) */}
-            {mode === "signup" && (
-              <>
-                <div className="space-y-2">
-                  <Label>Password</Label>
-                  <Input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Confirm Password</Label>
-                  <Input
-                    type="password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    required
-                  />
-                </div>
-              </>
-            )}
-
             <Button type="submit" className="w-full" disabled={loading}>
               {loading
-                ? "Processing..."
+                ? mode === "login"
+                  ? "Signing in..."
+                  : "Sending..."
                 : mode === "login"
                 ? "Sign In"
-                : mode === "forgot"
-                ? "Send Reset Link"
-                : "Create Account"}
+                : "Send Reset Link"}
             </Button>
-
             <div className="text-center space-y-2">
-              {mode !== "signup" && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMode("signup");
-                    setError("");
-                    setSuccess("");
-                  }}
-                  className="text-sm text-[#878D73] hover:underline block w-full"
-                >
-                  Don’t have an account? Sign up
-                </button>
-              )}
-
-              {mode !== "login" && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMode("login");
-                    setError("");
-                    setSuccess("");
-                  }}
-                  className="text-sm text-[#878D73] hover:underline block w-full"
-                >
-                  Back to login
-                </button>
-              )}
-
+              <button
+                type="button"
+                onClick={() => {
+                  setMode(mode === "login" ? "forgot" : "login")
+                  setError("")
+                  setSuccess("")
+                }}
+                className="text-sm text-[#878D73] hover:underline block w-full"
+              >
+                {mode === "login" ? "Forgot your password?" : "Back to login"}
+              </button>
               {mode === "login" && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMode("forgot");
-                    setError("");
-                    setSuccess("");
-                  }}
-                  className="text-sm text-[#878D73] hover:underline block w-full"
-                >
-                  Forgot your password?
-                </button>
+                <Link href="/bo/register" className="text-sm text-[#878D73] hover:underline block">
+                  Don&apos;t have an account? Sign up
+                </Link>
               )}
             </div>
           </form>
         </CardContent>
       </Card>
     </div>
-  );
+  )
 }
