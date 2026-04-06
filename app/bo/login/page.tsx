@@ -59,6 +59,15 @@ export default function BOLoginPage() {
     try {
       const supabase = createClient()
 
+      if (document.requestStorageAccess) {
+  try {
+    await document.requestStorageAccess()
+    console.log("[LOGIN] Storage access granted")
+  } catch {
+    console.log("[LOGIN] Storage access denied")
+  }
+}
+
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,
