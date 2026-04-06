@@ -28,14 +28,11 @@ export default function BOLoginPage() {
   const router = useRouter()
 
   useEffect(() => {
-    // Check if already logged in
     const checkAuth = async () => {
       const supabase = createClient()
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
+      const { data: { user } } = await supabase.auth.getUser()
+
       if (user) {
-        // Check profile status
         const { data: profile } = await supabase
           .from("profiles")
           .select("status, role, is_admin")
@@ -57,16 +54,18 @@ export default function BOLoginPage() {
     setLoading(true)
 
     try {
-      const supabase = createClient()
+      // IMPORTANT: Request storage access BEFORE creating Supabase client
+      if (typeof document !== "undefined" && (document as any).requestStorageAccess) {
+        try {
+          await (document as any).requestStorageAccess()
+          console.log("[LOGIN] Storage access granted")
+        } catch {
+          console.log("[LOGIN] Storage access denied")
+        }
+      }
 
-      if (document.requestStorageAccess) {
-  try {
-    await document.requestStorageAccess()
-    console.log("[LOGIN] Storage access granted")
-  } catch {
-    console.log("[LOGIN] Storage access denied")
-  }
-}
+      // Now create the client AFTER storage access is granted
+      const supabase = createClient()
 
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email,
@@ -75,19 +74,16 @@ export default function BOLoginPage() {
 
       if (authError) {
         setError("Invalid email or password")
-        setSuccess("")
         setLoading(false)
         return
       }
 
       if (!authData.user) {
         setError("Authentication failed")
-        setSuccess("")
         setLoading(false)
         return
       }
 
-      // Check profile exists and is approved
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("id, status, role, is_admin")
@@ -97,7 +93,6 @@ export default function BOLoginPage() {
       if (profileError || !profile) {
         await supabase.auth.signOut()
         setError("No profile found. Please contact an administrator.")
-        setSuccess("")
         setLoading(false)
         return
       }
@@ -105,26 +100,21 @@ export default function BOLoginPage() {
       if (profile.status !== "approved") {
         await supabase.auth.signOut()
         setError(`Access denied. Your profile status is "${profile.status}". Please wait for admin approval.`)
-        setSuccess("")
         setLoading(false)
         return
       }
 
-      // For admin role, verify is_admin is true
       if (profile.role === "admin" && !profile.is_admin) {
         await supabase.auth.signOut()
         setError("Access denied. Admin privileges not granted.")
-        setSuccess("")
         setLoading(false)
         return
       }
 
-      // Success - redirect to BO
       router.push("/bo")
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "An error occurred. Please try again."
       setError(errorMessage)
-      setSuccess("")
       setLoading(false)
     }
   }
@@ -136,7 +126,6 @@ export default function BOLoginPage() {
     setLoading(true)
 
     try {
-      // PKCE / Firefox storage access safeguard
       if (typeof document !== "undefined" && (document as any).requestStorageAccess) {
         try {
           await (document as any).requestStorageAccess()
@@ -147,25 +136,19 @@ export default function BOLoginPage() {
       }
 
       const redirectTo = getRedirectUrl()
-      console.log("[v0] Reset password redirectTo:", redirectTo)
       const supabase = createClient()
       const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, { redirectTo })
 
       if (resetError) {
-        console.error("[RESET EMAIL ERROR]", resetError)
         setError("Failed to send recovery email.")
-        setSuccess("")
         setLoading(false)
         return
       }
 
       setSuccess("A recovery email has been sent.")
-      setError("")
       setLoading(false)
-    } catch (err) {
-      console.error("[RESET EMAIL EXCEPTION]", err)
+    } catch {
       setError("Failed to send recovery email.")
-      setSuccess("")
       setLoading(false)
     }
   }
@@ -188,11 +171,9 @@ export default function BOLoginPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={mode === "login" ? handleLogin : handleForgotPassword} className="space-y-4">
-            {error ? (
-              <div className="p-3 text-sm text-red-600 bg-red-50 rounded-lg">{error}</div>
-            ) : success ? (
-              <div className="p-3 text-sm text-green-600 bg-green-50 rounded-lg">{success}</div>
-            ) : null}
+            {error && <div className="p-3 text-sm text-red-600 bg-red-50 rounded-lg">{error}</div>}
+            {success && <div className="p-3 text-sm text-green-600 bg-green-50 rounded-lg">{success}</div>}
+
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -204,6 +185,7 @@ export default function BOLoginPage() {
                 required
               />
             </div>
+
             {mode === "login" && (
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
@@ -217,6 +199,7 @@ export default function BOLoginPage() {
                 />
               </div>
             )}
+
             <Button type="submit" className="w-full" disabled={loading}>
               {loading
                 ? mode === "login"
@@ -226,6 +209,7 @@ export default function BOLoginPage() {
                 ? "Sign In"
                 : "Send Reset Link"}
             </Button>
+
             <div className="text-center space-y-2">
               <button
                 type="button"
@@ -238,6 +222,7 @@ export default function BOLoginPage() {
               >
                 {mode === "login" ? "Forgot your password?" : "Back to login"}
               </button>
+
               {mode === "login" && (
                 <Link href="/bo/register" className="text-sm text-[#878D73] hover:underline block">
                   Don&apos;t have an account? Sign up
