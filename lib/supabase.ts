@@ -1,5 +1,5 @@
 // lib/supabase.ts
-import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+import { createClient as createSupabaseClient, type SupabaseClient } from "@supabase/supabase-js";
 
 const FALLBACK_SUPABASE_URL = "https://eemnjizfrqobmcbcmwjf.supabase.co";
 const FALLBACK_SUPABASE_ANON_KEY =
@@ -11,9 +11,9 @@ const envKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const supabaseUrl = envUrl || FALLBACK_SUPABASE_URL;
 const supabaseKey = envKey || FALLBACK_SUPABASE_ANON_KEY;
 
-let browserClient: any = null;
+let browserClient: SupabaseClient | null = null;
 
-export function createClient() {
+export function createClient(): SupabaseClient {
   if (!browserClient) {
     browserClient = createSupabaseClient(supabaseUrl, supabaseKey, {
       auth: {
@@ -23,5 +23,6 @@ export function createClient() {
       },
     });
   }
+
   return browserClient;
 }
