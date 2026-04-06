@@ -16,11 +16,14 @@ const getRedirectUrl = () => {
 
 export default function BOLoginPage() {
   const [email, setEmail] = useState("");
-  const [password] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
-  const [mode, setMode] = useState<"login" | "forgot">("login");
+
+  // ⬅️ NEW: add "signup" mode
+  const [mode, setMode] = useState<"login" | "forgot" | "signup">("login");
 
   useEffect(() => {
     console.log("---- LOGIN PAGE DEBUG ----");
@@ -39,7 +42,6 @@ export default function BOLoginPage() {
     setLoading(true);
 
     try {
-      // Firefox: request permission for cross-site cookies
       if (document.requestStorageAccess) {
         try {
           await document.requestStorageAccess();
@@ -57,7 +59,6 @@ export default function BOLoginPage() {
       console.log("[RESET EMAIL DEBUG] data:", data);
       console.log("[RESET EMAIL DEBUG] error:", error);
 
-      // ⬇️ ADDITION: full error logging so we can see the real cause
       console.error("[RESET EMAIL ERROR RAW]:", error);
       console.error("[RESET EMAIL ERROR DETAILS]:", {
         name: error?.name,
@@ -80,6 +81,44 @@ export default function BOLoginPage() {
     }
   };
 
+  // ⬅️ NEW: handle sign‑up
+  const handleSignup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setSuccess("");
+    setLoading(true);
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const supabase = createClient();
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+      });
+
+      console.log("[SIGNUP DEBUG] data:", data);
+      console.log("[SIGNUP DEBUG] error:", error);
+
+      if (error) {
+        setError(error.message);
+        setLoading(false);
+        return;
+      }
+
+      setSuccess("Account created. Check your email to confirm.");
+      setLoading(false);
+    } catch (err) {
+      console.error(err);
+      setError("Failed to create account.");
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#F5F1E6] p-4">
       <Card className="w-full max-w-md">
@@ -90,12 +129,14 @@ export default function BOLoginPage() {
             className="h-12 mx-auto mb-4"
           />
           <CardTitle className="font-display text-2xl">
-            {mode === "login" ? "Back-Office Login" : "Reset Password"}
+            {mode === "login" && "Back-Office Login"}
+            {mode === "forgot" && "Reset Password"}
+            {mode === "signup" && "Create Account"}
           </CardTitle>
           <CardDescription>
-            {mode === "login"
-              ? "Sign in to access the Back-Office"
-              : "Enter your email to receive a reset link"}
+            {mode === "login" && "Sign in to access the Back-Office"}
+            {mode === "forgot" && "Enter your email to receive a reset link"}
+            {mode === "signup" && "Create a new Back-Office account"}
           </CardDescription>
         </CardHeader>
 
@@ -103,11 +144,9 @@ export default function BOLoginPage() {
           <form
             className="space-y-4"
             onSubmit={(e) => {
-              if (mode === "forgot") {
-                void handleForgotPassword(e);
-              } else {
-                e.preventDefault();
-              }
+              if (mode === "forgot") return void handleForgotPassword(e);
+              if (mode === "signup") return void handleSignup(e);
+              e.preventDefault();
             }}
           >
             {error && <div className="p-3 text-sm text-red-600 bg-red-50 rounded-lg">{error}</div>}
@@ -126,22 +165,68 @@ export default function BOLoginPage() {
               />
             </div>
 
+            {mode === "signup" && (
+              <>
+                <div className="space-y-2">
+                  <Label>Password</Label>
+                  <Input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Confirm Password</Label>
+                  <Input
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
+                  />
+                </div>
+              </>
+            )}
+
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? (mode === "login" ? "Signing in..." : "Sending...") : mode === "login" ? "Sign In" : "Send Reset Link"}
+              {loading
+                ? "Processing..."
+                : mode === "login"
+                ? "Sign In"
+                : mode === "forgot"
+                ? "Send Reset Link"
+                : "Create Account"}
             </Button>
 
             <div className="text-center space-y-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setMode(mode === "login" ? "forgot" : "login");
-                  setError("");
-                  setSuccess("");
-                }}
-                className="text-sm text-[#878D73] hover:underline block w-full"
-              >
-                {mode === "login" ? "Forgot your password?" : "Back to login"}
-              </button>
+              {mode !== "signup" && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMode("signup");
+                    setError("");
+                    setSuccess("");
+                  }}
+                  className="text-sm text-[#878D73] hover:underline block w-full"
+                >
+                  Don’t have an account? Sign up
+                </button>
+              )}
+
+              {mode !== "login" && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMode("login");
+                    setError("");
+                    setSuccess("");
+                  }}
+                  className="text-sm text-[#878D73] hover:underline block w-full"
+                >
+                  Back to login
+                </button>
+              )}
             </div>
           </form>
         </CardContent>
