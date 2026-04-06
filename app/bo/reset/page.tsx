@@ -1,66 +1,29 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect, Suspense } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import { createClient } from "@/lib/supabase"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
-function ResetPasswordForm() {
+const emailRedirectTo = process.env.NEXT_PUBLIC_SITE_URL + "/bo/login"
+
+export default function BORegisterPage() {
+  const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
+  const [role, setRole] = useState<"admin" | "expert">("expert")
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
   const [loading, setLoading] = useState(false)
-  const [validatingToken, setValidatingToken] = useState(true)
-  const [tokenValid, setTokenValid] = useState(false)
   const router = useRouter()
 
-  useEffect(() => {
-    const validateToken = async () => {
-      try {
-        // PKCE: Supabase sends access_token + type in the URL hash
-        const hash = window.location.hash || ""
-        console.log("[RESET DEBUG] HASH RAW:", hash)
-
-        const params = new URLSearchParams(hash.replace("#", ""))
-        const accessToken = params.get("access_token")
-        const type = params.get("type")
-
-        console.log("[RESET DEBUG] EXTRACTED access_token:", accessToken)
-        console.log("[RESET DEBUG] EXTRACTED type:", type)
-
-        if (type === "recovery" && accessToken) {
-          const supabase = createClient()
-          const { error } = await supabase.auth.exchangeCodeForSession(accessToken)
-
-          if (error) {
-            console.error("[RESET DEBUG] exchangeCodeForSession error:", error)
-            setError("Invalid or expired reset link. Please request a new one.")
-            setTokenValid(false)
-          } else {
-            setTokenValid(true)
-          }
-        } else {
-          setError("Invalid reset link. Please request a new password reset.")
-          setTokenValid(false)
-        }
-      } catch (err) {
-        console.error("[RESET DEBUG] validateToken exception:", err)
-        setError("Failed to validate reset link.")
-        setTokenValid(false)
-      } finally {
-        setValidatingToken(false)
-      }
-    }
-
-    validateToken()
-  }, [])
-
-  const handleResetPassword = async (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
     setSuccess("")
@@ -79,45 +42,39 @@ function ResetPasswordForm() {
 
     try {
       const supabase = createClient()
-      const { error: updateError } = await supabase.auth.updateUser({ password })
 
-      if (updateError) {
-        console.error("[RESET DEBUG] updateUser error:", updateError)
-        setError(updateError.message || "Failed to update password.")
+      const { error: signUpError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo,
+          data: {
+            role: role, // Pass role in user metadata for the trigger
+          },
+        },
+      })
+
+      if (signUpError) {
+        setError(signUpError.message || "Failed to create account.")
         setSuccess("")
         setLoading(false)
         return
       }
 
-      setSuccess("Password updated successfully! Redirecting to login...")
+      setSuccess(
+        "Account created! Please check your email to confirm your registration. Your account will need admin approval before you can access the Back-Office.",
+      )
       setError("")
-
-      await supabase.auth.signOut()
+      setLoading(false)
 
       setTimeout(() => {
         router.push("/bo/login")
-      }, 2000)
+      }, 4000)
     } catch (err) {
-      console.error("[RESET DEBUG] handleResetPassword exception:", err)
       setError("An error occurred. Please try again.")
       setSuccess("")
       setLoading(false)
     }
-  }
-
-  if (validatingToken) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#F5F1E6] p-4">
-        <Card className="w-full max-w-md">
-          <CardContent className="pt-6">
-            <div className="flex flex-col items-center gap-4">
-              <div className="w-8 h-8 border-4 border-[#878D73] border-t-transparent rounded-full animate-spin" />
-              <p className="text-sm text-muted-foreground">Validating reset link...</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    )
   }
 
   return (
@@ -129,73 +86,79 @@ function ResetPasswordForm() {
             alt="Parentys"
             className="h-12 mx-auto mb-4"
           />
-          <CardTitle className="font-display text-2xl">Reset Password</CardTitle>
-          <CardDescription>
-            {tokenValid ? "Enter your new password below" : "Unable to reset password"}
-          </CardDescription>
+          <CardTitle className="font-display text-2xl">Create Account</CardTitle>
+          <CardDescription>Sign up for Back-Office access</CardDescription>
         </CardHeader>
         <CardContent>
-          {!tokenValid ? (
-            <div className="space-y-4">
+          <form onSubmit={handleRegister} className="space-y-4">
+            {error ? (
               <div className="p-3 text-sm text-red-600 bg-red-50 rounded-lg">{error}</div>
-              <Button onClick={() => router.push("/bo/login")} className="w-full">
-                Back to Login
-              </Button>
+            ) : success ? (
+              <div className="p-3 text-sm text-green-600 bg-green-50 rounded-lg">{success}</div>
+            ) : null}
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+                required
+              />
             </div>
-          ) : (
-            <form onSubmit={handleResetPassword} className="space-y-4">
-              {error ? (
-                <div className="p-3 text-sm text-red-600 bg-red-50 rounded-lg">{error}</div>
-              ) : success ? (
-                <div className="p-3 text-sm text-green-600 bg-green-50 rounded-lg">{success}</div>
-              ) : null}
-              <div className="space-y-2">
-                <Label htmlFor="password">New Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="At least 6 characters"
-                  required
-                  minLength={6}
-                  disabled={!!success}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm New Password</Label>
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Confirm your new password"
-                  required
-                  minLength={6}
-                  disabled={!!success}
-                />
-              </div>
-              <Button type="submit" className="w-full" disabled={loading || !!success}>
-                {loading ? "Updating..." : "Update Password"}
-              </Button>
-            </form>
-          )}
+            <div className="space-y-2">
+              <Label htmlFor="role">Role</Label>
+              <Select value={role} onValueChange={(value: "admin" | "expert") => setRole(value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select your role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="expert">Expert</SelectItem>
+                  <SelectItem value="admin">Admin</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                {role === "admin"
+                  ? "Admins can manage all users and content."
+                  : "Experts can manage their own content."}
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="At least 6 characters"
+                required
+                minLength={6}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Confirm your password"
+                required
+                minLength={6}
+              />
+            </div>
+            <Button type="submit" className="w-full" disabled={loading || !!success}>
+              {loading ? "Creating account..." : "Sign Up"}
+            </Button>
+            <div className="text-center">
+              <Link href="/bo/login" className="text-sm text-[#878D73] hover:underline">
+                Already have an account? Sign in
+              </Link>
+            </div>
+          </form>
         </CardContent>
       </Card>
     </div>
-  )
-}
-
-export default function BOResetPage() {
-  return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#F5F1E6] p-4">
-          <div className="w-8 h-8 border-4 border-[#878D73] border-t-transparent rounded-full animate-spin" />
-        </div>
-      }
-    >
-      <ResetPasswordForm />
-    </Suspense>
   )
 }
