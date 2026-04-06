@@ -3,111 +3,52 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase";
 
-export default function ResetPasswordPage() {
-  const [status, setStatus] = useState<"idle" | "processing" | "error" | "success">("idle");
-  const [message, setMessage] = useState<string>("");
-
-  const log = (...args: any[]) => console.log("[RESET DEBUG]", ...args);
+export default function ResetPage() {
+  const [status, setStatus] = useState("loading");
 
   useEffect(() => {
-    log("Component mounted");
-
-    if (typeof window === "undefined") {
-      log("Window undefined — aborting");
-      return;
-    }
+    console.log("[RESET DEBUG] Component mounted");
 
     const supabase = createClient();
-    log("Supabase client created");
+    console.log("[RESET DEBUG] Supabase client created");
 
-    // ---- PKCE COOKIE DEBUG ----
-    log("COOKIE DEBUG: document.cookie =", document.cookie);
-
-    try {
-      const cookieNames = document.cookie
-        .split(";")
-        .map((c) => c.trim().split("=")[0]);
-      log("COOKIE DEBUG: cookie names =", cookieNames);
-    } catch (e) {
-      log("COOKIE DEBUG: error reading cookies", e);
-    }
-
-    const ua = navigator.userAgent.toLowerCase();
-    log("BROWSER DEBUG: userAgent =", ua);
+    console.log("[RESET DEBUG] COOKIE DEBUG: document.cookie =", document.cookie);
+    console.log("[RESET DEBUG] COOKIE DEBUG: cookie names =", document.cookie.split(";").map(c => c.trim().split("=")[0]));
 
     const hash = window.location.hash;
-    log("WINDOW LOCATION:", window.location.href);
-    log("HASH RAW:", hash);
-
-    if (!hash || hash.length < 10) {
-      log("No hash found — aborting");
-      setStatus("error");
-      setMessage("Invalid or missing reset token.");
-      return;
-    }
+    console.log("[RESET DEBUG] HASH RAW:", hash);
 
     const params = new URLSearchParams(hash.replace("#", ""));
-    const accessToken = params.get("access_token");
+    const access_token = params.get("access_token");
     const type = params.get("type");
 
-    log("EXTRACTED access_token:", accessToken);
-    log("EXTRACTED type:", type);
+    console.log("[RESET DEBUG] EXTRACTED access_token:", access_token);
+    console.log("[RESET DEBUG] EXTRACTED type:", type);
 
-    if (!accessToken || type !== "recovery") {
-      log("Missing token or wrong type — aborting");
-      setStatus("error");
-      setMessage("Invalid or expired reset link.");
+    if (!access_token || type !== "recovery") {
+      setStatus("invalid");
       return;
     }
 
-    setStatus("processing");
-    setMessage("Validating reset link…");
-
     setTimeout(async () => {
-      log("Starting PKCE exchange after delay");
+      console.log("[RESET DEBUG] Starting PKCE exchange after delay");
 
-      try {
-        const { data, error } = await supabase.auth.exchangeCodeForSession(accessToken);
+      const { data, error } = await supabase.auth.exchangeCodeForSession(access_token);
 
-        log("exchangeCodeForSession RESULT:", { data, error });
+      console.log("[RESET DEBUG] exchangeCodeForSession RESULT:", { data, error });
 
-        if (error) {
-          log("PKCE ERROR:", error);
-          setStatus("error");
-          setMessage("Invalid or expired reset link.");
-          return;
-        }
-
-        log("PKCE SUCCESS — session established:", data);
-        setStatus("success");
-        setMessage("Reset link validated. You may now set a new password.");
-
-      } catch (err) {
-        log("UNEXPECTED EXCEPTION:", err);
-        setStatus("error");
-        setMessage("Unexpected error during password reset.");
+      if (error) {
+        console.error("[RESET DEBUG] PKCE ERROR:", error);
+        setStatus("invalid");
+        return;
       }
-    }, 250);
+
+      setStatus("success");
+    }, 300);
   }, []);
 
-  return (
-    <div style={{ padding: 40 }}>
-      <h1>Reset Password</h1>
+  if (status === "loading") return <p>Validating reset link…</p>;
+  if (status === "invalid") return <p>Invalid or expired reset link.</p>;
 
-      {status === "idle" && <p>Preparing reset flow…</p>}
-      {status === "processing" && <p>{message}</p>}
-      {status === "success" && (
-        <p>
-          {message}
-          <br />
-          You can now enter your new password.
-        </p>
-      )}
-      {status === "error" && (
-        <p style={{ color: "red" }}>
-          {message}
-        </p>
-      )}
-    </div>
-  );
+  return <p>Reset link validated. You may now update your password.</p>;
 }
