@@ -57,6 +57,14 @@ export default function BOLoginPage() {
       console.log("[RESET EMAIL DEBUG] data:", data);
       console.log("[RESET EMAIL DEBUG] error:", error);
 
+      // ⬇️ ADDITION: full error logging so we can see the real cause
+      console.error("[RESET EMAIL ERROR RAW]:", error);
+      console.error("[RESET EMAIL ERROR DETAILS]:", {
+        name: error?.name,
+        message: error?.message,
+        status: (error as any)?.status,
+      });
+
       if (error) {
         setError("Failed to send recovery email.");
         setLoading(false);
