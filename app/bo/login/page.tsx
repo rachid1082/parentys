@@ -22,7 +22,7 @@ export default function BOLoginPage() {
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // ⬅️ NEW: add "signup" mode
+  // login | forgot | signup
   const [mode, setMode] = useState<"login" | "forgot" | "signup">("login");
 
   useEffect(() => {
@@ -35,6 +35,86 @@ export default function BOLoginPage() {
     );
   }, []);
 
+  // -------------------------
+  // LOGIN (password-based)
+  // -------------------------
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setSuccess("");
+    setLoading(true);
+
+    try {
+      const supabase = createClient();
+
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      console.log("[LOGIN DEBUG] data:", data);
+      console.log("[LOGIN DEBUG] error:", error);
+
+      if (error) {
+        setError(error.message);
+        setLoading(false);
+        return;
+      }
+
+      // redirect to BO dashboard
+      window.location.href = "/bo";
+    } catch (err) {
+      console.error(err);
+      setError("Login failed.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // -------------------------
+  // SIGNUP
+  // -------------------------
+  const handleSignup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setSuccess("");
+    setLoading(true);
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const supabase = createClient();
+
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+      });
+
+      console.log("[SIGNUP DEBUG] data:", data);
+      console.log("[SIGNUP DEBUG] error:", error);
+
+      if (error) {
+        setError(error.message);
+        setLoading(false);
+        return;
+      }
+
+      setSuccess("Account created. Check your email to confirm.");
+    } catch (err) {
+      console.error(err);
+      setError("Failed to create account.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // -------------------------
+  // FORGOT PASSWORD (PKCE)
+  // -------------------------
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -59,66 +139,31 @@ export default function BOLoginPage() {
       console.log("[RESET EMAIL DEBUG] data:", data);
       console.log("[RESET EMAIL DEBUG] error:", error);
 
-      console.error("[RESET EMAIL ERROR RAW]:", error);
-      console.error("[RESET EMAIL ERROR DETAILS]:", {
-        name: error?.name,
-        message: error?.message,
-        status: (error as any)?.status,
-      });
-
       if (error) {
+        console.error("[RESET EMAIL ERROR RAW]:", error);
+        console.error("[RESET EMAIL ERROR DETAILS]:", {
+          name: error?.name,
+          message: error?.message,
+          status: (error as any)?.status,
+        });
+
         setError("Failed to send recovery email.");
         setLoading(false);
         return;
       }
 
       setSuccess("A recovery email has been sent.");
-      setLoading(false);
     } catch (err) {
       console.error(err);
       setError("Failed to send recovery email.");
+    } finally {
       setLoading(false);
     }
   };
 
-  // ⬅️ NEW: handle sign‑up
-  const handleSignup = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    setSuccess("");
-    setLoading(true);
-
-    if (password !== confirmPassword) {
-      setError("Passwords do not match.");
-      setLoading(false);
-      return;
-    }
-
-    try {
-      const supabase = createClient();
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-      });
-
-      console.log("[SIGNUP DEBUG] data:", data);
-      console.log("[SIGNUP DEBUG] error:", error);
-
-      if (error) {
-        setError(error.message);
-        setLoading(false);
-        return;
-      }
-
-      setSuccess("Account created. Check your email to confirm.");
-      setLoading(false);
-    } catch (err) {
-      console.error(err);
-      setError("Failed to create account.");
-      setLoading(false);
-    }
-  };
-
+  // -------------------------
+  // RENDER
+  // -------------------------
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#F5F1E6] p-4">
       <Card className="w-full max-w-md">
@@ -144,9 +189,9 @@ export default function BOLoginPage() {
           <form
             className="space-y-4"
             onSubmit={(e) => {
-              if (mode === "forgot") return void handleForgotPassword(e);
+              if (mode === "login") return void handleLogin(e);
               if (mode === "signup") return void handleSignup(e);
-              e.preventDefault();
+              if (mode === "forgot") return void handleForgotPassword(e);
             }}
           >
             {error && <div className="p-3 text-sm text-red-600 bg-red-50 rounded-lg">{error}</div>}
@@ -154,6 +199,7 @@ export default function BOLoginPage() {
               <div className="p-3 text-sm text-green-600 bg-green-50 rounded-lg">{success}</div>
             )}
 
+            {/* EMAIL */}
             <div className="space-y-2">
               <Label>Email</Label>
               <Input
@@ -165,6 +211,20 @@ export default function BOLoginPage() {
               />
             </div>
 
+            {/* PASSWORD (LOGIN MODE) */}
+            {mode === "login" && (
+              <div className="space-y-2">
+                <Label>Password</Label>
+                <Input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </div>
+            )}
+
+            {/* PASSWORD + CONFIRM (SIGNUP MODE) */}
             {mode === "signup" && (
               <>
                 <div className="space-y-2">
@@ -225,6 +285,20 @@ export default function BOLoginPage() {
                   className="text-sm text-[#878D73] hover:underline block w-full"
                 >
                   Back to login
+                </button>
+              )}
+
+              {mode === "login" && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMode("forgot");
+                    setError("");
+                    setSuccess("");
+                  }}
+                  className="text-sm text-[#878D73] hover:underline block w-full"
+                >
+                  Forgot your password?
                 </button>
               )}
             </div>
