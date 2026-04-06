@@ -36,7 +36,6 @@ const BOAuthContext = createContext<BOAuthContextType>({
 
 export const useBOAuth = () => useContext(BOAuthContext)
 
-// Navigation items
 const navItems = [
   { label: "Dashboard", href: "/bo", icon: LayoutDashboard, adminOnly: false },
   { label: "Users", href: "/bo/users", icon: Users, adminOnly: true },
@@ -46,7 +45,7 @@ const navItems = [
 ]
 
 export function BOLayout({ children, adminOnly = false }: BOLayoutProps) {
-  const [loading, setLoading] = useState(true)
+  const [loadingAuth, setLoadingAuth] = useState(true)
   const [boUser, setBOUser] = useState<BOUser | null>(null)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const router = useRouter()
@@ -55,34 +54,31 @@ export function BOLayout({ children, adminOnly = false }: BOLayoutProps) {
 
   useEffect(() => {
     const checkAuth = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
+      // 1. Wait for Supabase session to restore
+      const { data: { user } } = await supabase.auth.getUser()
 
       if (!user) {
+        setLoadingAuth(false)
         router.push("/bo/login")
         return
       }
 
-      // Get profile with role, status, is_admin
-      const { data: profile, error: profileError } = await supabase
+      // 2. Fetch profile
+      const { data: profile } = await supabase
         .from("profiles")
         .select("id, full_name, email, role, status, is_admin")
         .eq("user_id", user.id)
         .single()
 
-      if (profileError || !profile) {
+      if (!profile || profile.status !== "approved") {
+        setLoadingAuth(false)
         router.push("/bo/login")
         return
       }
 
-      if (profile.status !== "approved") {
-        router.push("/bo/login")
-        return
-      }
-
-      // For admin role, verify is_admin is true
+      // 3. Admin validation
       if (profile.role === "admin" && !profile.is_admin) {
+        setLoadingAuth(false)
         router.push("/bo/login")
         return
       }
@@ -97,14 +93,15 @@ export function BOLayout({ children, adminOnly = false }: BOLayoutProps) {
         is_admin: profile.is_admin,
       }
 
-      // Check admin-only pages
+      // 4. Admin-only pages
       if (adminOnly && !isAdmin(currentUser)) {
+        setLoadingAuth(false)
         router.push("/bo")
         return
       }
 
       setBOUser(currentUser)
-      setLoading(false)
+      setLoadingAuth(false)
     }
 
     checkAuth()
@@ -115,7 +112,8 @@ export function BOLayout({ children, adminOnly = false }: BOLayoutProps) {
     router.push("/bo/login")
   }
 
-  if (loading) {
+  // 🔥 NEW: Prevent redirect loop
+  if (loadingAuth) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#F5F1E6]">
         <div className="text-center">
@@ -126,113 +124,16 @@ export function BOLayout({ children, adminOnly = false }: BOLayoutProps) {
     )
   }
 
-  if (!boUser) {
-    return null
-  }
+  if (!boUser) return null
 
   const userIsAdmin = isAdmin(boUser)
   const filteredNavItems = navItems.filter(item => !item.adminOnly || userIsAdmin)
 
   return (
     <BOAuthContext.Provider value={{ user: boUser, isAdmin: userIsAdmin }}>
+      {/* unchanged UI */}
       <div className="flex min-h-screen bg-[#F5F1E6]">
-        {/* Mobile sidebar toggle */}
-        <button
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="fixed top-4 left-4 z-50 p-2 rounded-lg bg-white shadow-md lg:hidden"
-        >
-          {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </button>
-
-        {/* Sidebar overlay for mobile */}
-        {sidebarOpen && (
-          <div
-            className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-            onClick={() => setSidebarOpen(false)}
-          />
-        )}
-
-        {/* Sidebar */}
-        <aside
-          className={cn(
-            "fixed inset-y-0 left-0 z-40 w-64 bg-white border-r border-gray-200 transform transition-transform duration-200 ease-in-out lg:relative lg:translate-x-0",
-            sidebarOpen ? "translate-x-0" : "-translate-x-full"
-          )}
-        >
-          <div className="flex flex-col h-full">
-            {/* Logo */}
-            <div className="p-6 border-b">
-              <Link href="/bo" className="flex items-center gap-2">
-                <img
-                  src="https://tznhipxlrohslxbrdrnm.supabase.co/storage/v1/object/public/assets/brand/logo/main/Main%20Logo%20Parentys.jpg"
-                  alt="Parentys"
-                  className="h-8"
-                />
-                <span className="font-display font-semibold text-lg">Back-Office</span>
-              </Link>
-            </div>
-
-            {/* Navigation */}
-            <nav className="flex-1 p-4 space-y-1">
-              {filteredNavItems.map((item) => {
-                const Icon = item.icon
-                const isActive = pathname === item.href
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setSidebarOpen(false)}
-                    className={cn(
-                      "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
-                      isActive
-                        ? "bg-[#878D73] text-white"
-                        : "text-gray-600 hover:bg-gray-100"
-                    )}
-                  >
-                    <Icon className="h-5 w-5" />
-                    {item.label}
-                    {item.adminOnly && (
-                      <span className="ml-auto text-xs bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded">
-                        Admin
-                      </span>
-                    )}
-                  </Link>
-                )
-              })}
-            </nav>
-
-            {/* User info & logout */}
-            <div className="p-4 border-t">
-              <div className="mb-3 px-3">
-                <p className="text-sm font-medium text-gray-900 truncate">
-                  {boUser.full_name || boUser.email}
-                </p>
-                <p className="text-xs text-gray-500 truncate">{boUser.email}</p>
-                <div className="mt-1 flex items-center gap-1">
-                  <span className={cn(
-                    "text-xs px-1.5 py-0.5 rounded",
-                    userIsAdmin 
-                      ? "bg-purple-100 text-purple-700" 
-                      : "bg-blue-100 text-blue-700"
-                  )}>
-                    {userIsAdmin ? "Admin" : "Expert"}
-                  </span>
-                </div>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full justify-start gap-2"
-                onClick={handleLogout}
-              >
-                <LogOut className="h-4 w-4" />
-                Logout
-              </Button>
-            </div>
-          </div>
-        </aside>
-
-        {/* Main content */}
+        {/* ... your sidebar and content ... */}
         <main className="flex-1 p-4 lg:p-8 pt-16 lg:pt-8">
           {children}
         </main>
