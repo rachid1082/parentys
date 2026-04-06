@@ -1,5 +1,5 @@
 // lib/supabase.ts
-import { createClient as createSupabaseClient, type SupabaseClient } from "@supabase/supabase-js";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 
 const FALLBACK_SUPABASE_URL = "https://eemnjizfrqobmcbcmwjf.supabase.co";
 const FALLBACK_SUPABASE_ANON_KEY =
@@ -11,24 +11,15 @@ const envKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const supabaseUrl = envUrl || FALLBACK_SUPABASE_URL;
 const supabaseKey = envKey || FALLBACK_SUPABASE_ANON_KEY;
 
-if (!supabaseUrl || !supabaseKey) {
-  console.error("[Supabase] Missing environment variables:", {
-    url: supabaseUrl ? "set" : "MISSING",
-    key: supabaseKey ? "set" : "MISSING",
-  });
-  throw new Error(
-    "Supabase environment variables are not configured. Please add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.",
-  );
-}
+let browserClient: any = null;
 
-let browserClient: SupabaseClient | null = null;
-
-export function createClient(): SupabaseClient {
+export function createClient() {
   if (!browserClient) {
     browserClient = createSupabaseClient(supabaseUrl, supabaseKey, {
       auth: {
         flowType: "pkce",
         detectSessionInUrl: false,
+        storage: typeof window !== "undefined" ? window.localStorage : undefined,
       },
     });
   }
