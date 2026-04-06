@@ -1,83 +1,76 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
-import Link from "next/link"
-import { createClient } from "@/lib/supabase"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { useState, useEffect } from "react";
+import { createClient } from "@/lib/supabase";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 const getRedirectUrl = () => {
   if (typeof window !== "undefined") {
-    const url = `${window.location.origin}/bo/reset`
-    console.log("[LOGIN DEBUG] redirectTo (client):", url)
-    return url
+    return `${window.location.origin}/bo/reset`;
   }
-
-  const fallback = `${process.env.NEXT_PUBLIC_SITE_URL}/bo/reset`
-  console.log("[LOGIN DEBUG] redirectTo (server):", fallback)
-  return fallback
-}
+  return `${process.env.NEXT_PUBLIC_SITE_URL}/bo/reset`;
+};
 
 export default function BOLoginPage() {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [error, setError] = useState("")
-  const [success, setSuccess] = useState("")
-  const [loading, setLoading] = useState(false)
-  const [mode, setMode] = useState<"login" | "forgot">("login")
-  const router = useRouter()
+  const [email, setEmail] = useState("");
+  const [password] = useState("");
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [mode, setMode] = useState<"login" | "forgot">("login");
 
   useEffect(() => {
-    console.log("---- LOGIN PAGE DEBUG ----")
-    console.log("ENV SITE URL:", process.env.NEXT_PUBLIC_SITE_URL)
-    console.log("ENV SUPABASE URL:", process.env.NEXT_PUBLIC_SUPABASE_URL)
+    console.log("---- LOGIN PAGE DEBUG ----");
+    console.log("ENV SITE URL:", process.env.NEXT_PUBLIC_SITE_URL);
+    console.log("ENV SUPABASE URL:", process.env.NEXT_PUBLIC_SUPABASE_URL);
     console.log(
       "ENV SUPABASE ANON KEY (first 10 chars):",
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.slice(0, 10),
-    )
-  }, [])
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.slice(0, 10)
+    );
+  }, []);
 
   const handleForgotPassword = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError("")
-    setSuccess("")
-    setLoading(true)
+    e.preventDefault();
+    setError("");
+    setSuccess("");
+    setLoading(true);
 
     try {
-      const redirectTo = getRedirectUrl()
-      console.log("[LOGIN DEBUG] Sending reset email with redirectTo:", redirectTo)
-
-      const supabase = createClient()
-      const { data, error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo })
-
-      console.log("[RESET EMAIL DEBUG] data:", data)
-      console.log("[RESET EMAIL DEBUG] error:", error)
-
-      if (error) {
-        console.error("[LOGIN DEBUG] resetPasswordForEmail ERROR DETAILS:", {
-          name: error.name,
-          message: error.message,
-          // @ts-expect-error status may exist
-          status: (error as any).status,
-        })
-        setError("Failed to send recovery email.")
-        setLoading(false)
-        return
+      // Firefox: request permission for cross-site cookies
+      if (document.requestStorageAccess) {
+        try {
+          await document.requestStorageAccess();
+          console.log("[LOGIN DEBUG] Storage access granted");
+        } catch {
+          console.log("[LOGIN DEBUG] Storage access denied");
+        }
       }
 
-      console.log("[LOGIN DEBUG] Recovery email sent successfully")
-      setSuccess("A recovery email has been sent.")
-      setLoading(false)
+      const redirectTo = getRedirectUrl();
+      const supabase = createClient();
+
+      const { data, error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
+
+      console.log("[RESET EMAIL DEBUG] data:", data);
+      console.log("[RESET EMAIL DEBUG] error:", error);
+
+      if (error) {
+        setError("Failed to send recovery email.");
+        setLoading(false);
+        return;
+      }
+
+      setSuccess("A recovery email has been sent.");
+      setLoading(false);
     } catch (err) {
-      console.error("[LOGIN DEBUG] Unexpected error:", err)
-      setError("Failed to send recovery email.")
-      setLoading(false)
+      console.error(err);
+      setError("Failed to send recovery email.");
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#F5F1E6] p-4">
@@ -97,28 +90,26 @@ export default function BOLoginPage() {
               : "Enter your email to receive a reset link"}
           </CardDescription>
         </CardHeader>
+
         <CardContent>
           <form
             className="space-y-4"
             onSubmit={(e) => {
               if (mode === "forgot") {
-                void handleForgotPassword(e)
+                void handleForgotPassword(e);
               } else {
-                e.preventDefault()
-                // TODO: implement login flow
+                e.preventDefault();
               }
             }}
           >
-            {error ? (
-              <div className="p-3 text-sm text-red-600 bg-red-50 rounded-lg">{error}</div>
-            ) : success ? (
+            {error && <div className="p-3 text-sm text-red-600 bg-red-50 rounded-lg">{error}</div>}
+            {success && (
               <div className="p-3 text-sm text-green-600 bg-green-50 rounded-lg">{success}</div>
-            ) : null}
+            )}
 
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label>Email</Label>
               <Input
-                id="email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -127,52 +118,26 @@ export default function BOLoginPage() {
               />
             </div>
 
-            {mode === "login" && (
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter your password"
-                  required
-                />
-              </div>
-            )}
-
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading
-                ? mode === "login"
-                  ? "Signing in..."
-                  : "Sending..."
-                : mode === "login"
-                  ? "Sign In"
-                  : "Send Reset Link"}
+              {loading ? (mode === "login" ? "Signing in..." : "Sending...") : mode === "login" ? "Sign In" : "Send Reset Link"}
             </Button>
 
             <div className="text-center space-y-2">
               <button
                 type="button"
                 onClick={() => {
-                  setMode(mode === "login" ? "forgot" : "login")
-                  setError("")
-                  setSuccess("")
+                  setMode(mode === "login" ? "forgot" : "login");
+                  setError("");
+                  setSuccess("");
                 }}
                 className="text-sm text-[#878D73] hover:underline block w-full"
               >
                 {mode === "login" ? "Forgot your password?" : "Back to login"}
               </button>
-
-              {mode === "login" && (
-                <Link href="/bo/register" className="text-sm text-[#878D73] hover:underline block">
-                  Don&apos;t have an account? Sign up
-                </Link>
-              )}
             </div>
           </form>
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }
