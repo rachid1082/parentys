@@ -131,9 +131,94 @@ export function BOLayout({ children, adminOnly = false }: BOLayoutProps) {
 
   return (
     <BOAuthContext.Provider value={{ user: boUser, isAdmin: userIsAdmin }}>
-      {/* unchanged UI */}
       <div className="flex min-h-screen bg-[#F5F1E6]">
-        {/* ... your sidebar and content ... */}
+        {/* Mobile Header */}
+        <div className="lg:hidden fixed top-0 left-0 right-0 h-14 bg-white border-b z-50 flex items-center justify-between px-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+          >
+            {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </Button>
+          <span className="font-display font-semibold text-[#333333]">Parentys BO</span>
+          <div className="w-10" />
+        </div>
+
+        {/* Sidebar Overlay (mobile) */}
+        {sidebarOpen && (
+          <div
+            className="lg:hidden fixed inset-0 bg-black/50 z-40"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+
+        {/* Sidebar */}
+        <aside
+          className={cn(
+            "fixed lg:sticky top-0 left-0 z-40 h-screen w-64 bg-white border-r flex flex-col transition-transform duration-300",
+            sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+          )}
+        >
+          {/* Logo */}
+          <div className="h-14 flex items-center px-6 border-b">
+            <Link href="/bo" className="font-display font-semibold text-xl text-[#333333]">
+              Parentys BO
+            </Link>
+          </div>
+
+          {/* Navigation */}
+          <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+            {filteredNavItems.map((item) => {
+              const Icon = item.icon
+              const isActive = pathname === item.href || (item.href !== "/bo" && pathname?.startsWith(item.href))
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setSidebarOpen(false)}
+                  className={cn(
+                    "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                    isActive
+                      ? "bg-[#878D73] text-white"
+                      : "text-[#333333] hover:bg-[#F5F1E6]"
+                  )}
+                >
+                  <Icon className="h-5 w-5" />
+                  {item.label}
+                </Link>
+              )
+            })}
+          </nav>
+
+          {/* User Info & Logout */}
+          <div className="p-4 border-t">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="h-10 w-10 rounded-full bg-[#C9CEC0] flex items-center justify-center text-[#333333] font-medium">
+                {boUser.full_name?.charAt(0) || "U"}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-[#333333] truncate">
+                  {boUser.full_name || "User"}
+                </p>
+                <p className="text-xs text-muted-foreground truncate">
+                  {boUser.email}
+                </p>
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full"
+              onClick={handleLogout}
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              Logout
+            </Button>
+          </div>
+        </aside>
+
+        {/* Main Content */}
         <main className="flex-1 p-4 lg:p-8 pt-16 lg:pt-8">
           {children}
         </main>
