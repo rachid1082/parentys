@@ -16,7 +16,7 @@ import { ArrowLeft, Save, Loader2 } from "lucide-react"
 
 interface WorkshopData {
   id?: string
-  profile_id: string
+  expert_id: string
   category_id: string
   title: string
   title_en: string
@@ -36,7 +36,7 @@ interface WorkshopData {
 }
 
 const defaultWorkshop: WorkshopData = {
-  profile_id: "",
+  expert_id: "",
   category_id: "",
   title: "",
   title_en: "",
@@ -133,7 +133,7 @@ function WorkshopEditContent() {
     setMessage("")
 
     const workshopPayload = {
-      profile_id: workshop.profile_id || null,
+      expert_id: workshop.expert_id || null,
       category_id: workshop.category_id || null,
       title: workshop.title,
       title_en: workshop.title_en,
@@ -417,15 +417,15 @@ function WorkshopEditContent() {
             </CardHeader>
             <CardContent>
               <Select
-                value={workshop.profile_id}
-                onValueChange={(value) => setWorkshop({ ...workshop, profile_id: value })}
+                value={workshop.expert_id}
+                onValueChange={(value) => setWorkshop({ ...workshop, expert_id: value })}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select expert" />
                 </SelectTrigger>
                 <SelectContent>
                   {experts.map((expert) => (
-                    <SelectItem key={expert.id} value={expert.profile_id}>
+                    <SelectItem key={expert.id} value={expert.id}>
                       {expert.profiles?.full_name || "Unknown Expert"}
                     </SelectItem>
                   ))}
