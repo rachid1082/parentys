@@ -16,7 +16,8 @@ import {
   LogOut, 
   Menu, 
   X,
-  ShieldCheck
+  ShieldCheck,
+  FolderTree
 } from "lucide-react"
 
 interface BOLayoutProps {
@@ -41,6 +42,7 @@ const navItems = [
   { label: "Users", href: "/bo/users", icon: Users, adminOnly: true },
   { label: "Experts", href: "/bo/experts", icon: ShieldCheck, adminOnly: false },
   { label: "Workshops", href: "/bo/workshops", icon: Calendar, adminOnly: false },
+  { label: "Categories", href: "/bo/categories", icon: FolderTree, adminOnly: false },
   { label: "Articles", href: "/bo/articles", icon: FileText, adminOnly: false },
 ]
 
