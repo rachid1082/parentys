@@ -109,15 +109,24 @@ function CategoriesContent() {
       order_index: formData.order_index,
     }
 
+    let error
     if (editingCategory) {
-      await supabase.from("categories").update(payload).eq("id", editingCategory.id)
+      const result = await supabase.from("categories").update(payload).eq("id", editingCategory.id)
+      error = result.error
     } else {
-      await supabase.from("categories").insert(payload)
+      const result = await supabase.from("categories").insert(payload)
+      error = result.error
     }
 
     setSaving(false)
+
+    if (error) {
+      alert(`Error saving category: ${error.message}`)
+      return
+    }
+
     setDialogOpen(false)
-    fetchCategories()
+    await fetchCategories()
   }
 
   const deleteCategory = async (id: string) => {
