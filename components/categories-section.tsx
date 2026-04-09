@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Button } from "@/components/ui/button"
+import Link from "next/link"
 import { Baby, BookOpen, Brain, Heart, Smile, Utensils, FolderOpen } from "lucide-react"
 import { useLanguage } from "@/contexts/language-context"
 import { t } from "@/lib/translations"
@@ -66,9 +66,9 @@ export function CategoriesSection() {
             </h2>
             <p className="mt-4 text-lg text-muted-foreground">{t("exploreCategoriesDesc", language)}</p>
           </div>
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="h-32 rounded-2xl bg-card animate-pulse" />
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="h-36 rounded-2xl bg-card animate-pulse" />
             ))}
           </div>
         </div>
@@ -90,20 +90,22 @@ export function CategoriesSection() {
           <p className="mt-4 text-lg text-muted-foreground">{t("exploreCategoriesDesc", language)}</p>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
           {categories.map((category) => {
             const Icon = iconMap[category.slug] || FolderOpen
             return (
-              <Button
+              <Link
                 key={category.id}
-                variant="outline"
-                className="h-auto flex-col gap-3 rounded-2xl bg-card p-6 hover:bg-accent hover:shadow-md transition-all"
+                href={`/categories/${category.slug}`}
+                className="group flex h-auto flex-col items-center gap-3 rounded-2xl border border-border bg-card p-6 hover:border-primary hover:bg-accent/10 hover:shadow-md transition-all"
               >
-                <div className="rounded-full bg-primary/10 p-4">
+                <div className="rounded-full bg-primary/10 p-4 group-hover:bg-primary/20 transition-colors">
                   <Icon className="h-6 w-6 text-primary" />
                 </div>
-                <span className="text-sm font-semibold">{getCategoryLabel(category)}</span>
-              </Button>
+                <span className="text-sm font-semibold text-center leading-tight line-clamp-2 max-w-full">
+                  {getCategoryLabel(category)}
+                </span>
+              </Link>
             )
           })}
         </div>
