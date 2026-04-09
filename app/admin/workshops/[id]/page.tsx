@@ -13,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ArrowLeft, Save, Loader2 } from "lucide-react"
+import { ImageUpload } from "@/components/ui/image-upload"
 
 interface WorkshopData {
   id?: string
@@ -365,22 +366,14 @@ export default function WorkshopEditPage() {
               <CardHeader>
                 <CardTitle>Banner Image</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Banner URL</Label>
-                  <Input
-                    value={workshop.banner_url}
-                    onChange={(e) => setWorkshop({ ...workshop, banner_url: e.target.value })}
-                    placeholder="https://..."
-                  />
-                </div>
-                {workshop.banner_url && (
-                  <img
-                    src={workshop.banner_url || "/placeholder.svg"}
-                    alt="Banner preview"
-                    className="h-32 object-cover rounded-lg"
-                  />
-                )}
+              <CardContent>
+                <ImageUpload
+                  value={workshop.banner_url}
+                  onChange={(url) => setWorkshop({ ...workshop, banner_url: url })}
+                  bucket="images"
+                  folder="workshops"
+                  label="Workshop Banner"
+                />
               </CardContent>
             </Card>
           </div>
