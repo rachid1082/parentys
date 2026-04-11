@@ -164,8 +164,12 @@ export function BOLayout({ children, adminOnly = false }: BOLayoutProps) {
         >
           {/* Logo */}
           <div className="h-14 flex items-center px-6 border-b">
-            <Link href="/bo" className="font-display font-semibold text-xl text-[#333333]">
-              Parentys BO
+            <Link href="/bo" className="flex items-center gap-2">
+              <img
+                src="https://eemnjizfrqobmcbcmwjf.supabase.co/storage/v1/object/public/assets/brand/logo/bo/bo-sidebar-logo.png"
+                alt="Parentys BO"
+                className="h-8 w-auto"
+              />
             </Link>
           </div>
 

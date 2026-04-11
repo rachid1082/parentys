@@ -184,14 +184,8 @@ export function ExpertsListClient({ experts }: ExpertsListClientProps) {
         </div>
       </div>
 
-      {/* Optional story image divider */}
-      <div className="relative h-32 w-full overflow-hidden">
-        <img
-          src="https://eemnjizfrqobmcbcmwjf.supabase.co/storage/v1/object/public/assets/brand/story/story-2.jpg"
-          alt=""
-          className="h-full w-full object-cover opacity-30"
-        />
-      </div>
+      {/* Decorative divider */}
+      <div className="relative h-8 w-full bg-gradient-to-r from-[#C9CEC0] via-[#878D73] to-[#C9CEC0] opacity-30" />
 
       <div className="container mx-auto px-4 py-12 md:px-6 lg:px-8">
         {/* Filters Section */}

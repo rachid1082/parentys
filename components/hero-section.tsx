@@ -10,16 +10,18 @@ export function HeroSection() {
 
   return (
     <section className="relative overflow-hidden">
-      <div className="relative h-[600px] md:h-[700px]">
-        <img
-          src="https://eemnjizfrqobmcbcmwjf.supabase.co/storage/v1/object/public/assets/brand/banners/Banner_with%20logo_01.jpg"
-          alt="Parentys hero banner"
-          className="absolute inset-0 h-full w-full object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-background/40 to-transparent" />
+      <div className="relative h-[600px] md:h-[700px] bg-gradient-to-br from-[#C9CEC0] via-[#F5F1E6] to-[#878D73]">
+        <div className="absolute inset-0 bg-gradient-to-t from-background/60 via-transparent to-transparent" />
 
-        <div className="relative container mx-auto px-4 md:px-6 lg:px-8 h-full flex flex-col justify-end pb-16 md:pb-24">
+        <div className="relative container mx-auto px-4 md:px-6 lg:px-8 h-full flex flex-col justify-center">
           <div className="max-w-3xl">
+            <div className="mb-8">
+              <img
+                src="https://eemnjizfrqobmcbcmwjf.supabase.co/storage/v1/object/public/assets/brand/logo/main/Main%20Logo%20Parentys.jpg"
+                alt="Parentys"
+                className="h-24 md:h-32 w-auto"
+              />
+            </div>
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-foreground font-display mb-6">
               {t("empoweringParents", language)}
             </h1>
