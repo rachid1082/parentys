@@ -187,7 +187,7 @@ export function ExpertsListClient({ experts }: ExpertsListClientProps) {
       {/* Optional story image divider */}
       <div className="relative h-32 w-full overflow-hidden">
         <img
-          src="https://tznhipxlrohslxbrdrnm.supabase.co/storage/v1/object/public/assets/brand/story/story-2.jpg"
+          src="https://eemnjizfrqobmcbcmwjf.supabase.co/storage/v1/object/public/assets/brand/story/story-2.jpg"
           alt=""
           className="h-full w-full object-cover opacity-30"
         />

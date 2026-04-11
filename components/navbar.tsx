@@ -29,12 +29,12 @@ export function Navbar() {
         <div className="flex items-center gap-8">
           <Link href="/" className="flex items-center">
             <img
-              src="https://tznhipxlrohslxbrdrnm.supabase.co/storage/v1/object/public/assets/brand/logo/main/Main%20Logo%20Parentys.jpg"
+              src="https://eemnjizfrqobmcbcmwjf.supabase.co/storage/v1/object/public/assets/brand/logo/main/Main%20Logo%20Parentys.jpg"
               alt="Parentys"
               className="hidden h-10 w-auto md:block"
             />
             <img
-              src="https://tznhipxlrohslxbrdrnm.supabase.co/storage/v1/object/public/assets/brand/logo/symbol/Logo_Perfil%20Image.jpg"
+              src="https://eemnjizfrqobmcbcmwjf.supabase.co/storage/v1/object/public/assets/brand/logo/symbol/Logo_Perfil%20Image.jpg"
               alt="Parentys"
               className="h-12 w-12 rounded-full object-cover md:hidden"
             />

@@ -9,27 +9,27 @@ import { t } from "@/lib/translations";
 
 const VALUES = [
   {
-    icon: "https://tznhipxlrohslxbrdrnm.supabase.co/storage/v1/object/public/assets/brand/icons/Parentys_icon_Trust.jpg",
+    icon: "https://eemnjizfrqobmcbcmwjf.supabase.co/storage/v1/object/public/assets/brand/icons/Parentys_icon_Trust.jpg",
     titleKey: "valueTrust" as const,
     descKey: "valueTrustDesc" as const,
   },
   {
-    icon: "https://tznhipxlrohslxbrdrnm.supabase.co/storage/v1/object/public/assets/brand/icons/Parentys_icon_Kindness.jpg",
+    icon: "https://eemnjizfrqobmcbcmwjf.supabase.co/storage/v1/object/public/assets/brand/icons/Parentys_icon_Kindness.jpg",
     titleKey: "valueKindness" as const,
     descKey: "valueKindnessDesc" as const,
   },
   {
-    icon: "https://tznhipxlrohslxbrdrnm.supabase.co/storage/v1/object/public/assets/brand/icons/Parentys_icon_Accessibility.jpg",
+    icon: "https://eemnjizfrqobmcbcmwjf.supabase.co/storage/v1/object/public/assets/brand/icons/Parentys_icon_Accessibility.jpg",
     titleKey: "valueAccessibility" as const,
     descKey: "valueAccessibilityDesc" as const,
   },
   {
-    icon: "https://tznhipxlrohslxbrdrnm.supabase.co/storage/v1/object/public/assets/brand/icons/Parentys_icon_Growth.jpg",
+    icon: "https://eemnjizfrqobmcbcmwjf.supabase.co/storage/v1/object/public/assets/brand/icons/Parentys_icon_Growth.jpg",
     titleKey: "valueGrowth" as const,
     descKey: "valueGrowthDesc" as const,
   },
   {
-    icon: "https://tznhipxlrohslxbrdrnm.supabase.co/storage/v1/object/public/assets/brand/icons/Parentys_icon_Cultural%20Fit.jpg",
+    icon: "https://eemnjizfrqobmcbcmwjf.supabase.co/storage/v1/object/public/assets/brand/icons/Parentys_icon_Cultural%20Fit.jpg",
     titleKey: "valueCulturalFit" as const,
     descKey: "valueCulturalFitDesc" as const,
   },
@@ -75,7 +75,7 @@ export default function AboutPage() {
               </div>
               <div className="rounded-2xl overflow-hidden shadow-lg">
                 <img
-                  src="https://tznhipxlrohslxbrdrnm.supabase.co/storage/v1/object/public/assets/brand/story-images/story-image_01.jpg"
+                  src="https://eemnjizfrqobmcbcmwjf.supabase.co/storage/v1/object/public/assets/brand/story-images/story-image_01.jpg"
                   alt="Our mission"
                   className="w-full h-full object-cover"
                 />
@@ -127,7 +127,7 @@ export default function AboutPage() {
             <div className="grid gap-12 lg:grid-cols-2 items-center max-w-6xl mx-auto">
               <div className="order-2 lg:order-1 rounded-2xl overflow-hidden shadow-lg">
                 <img
-                  src="https://tznhipxlrohslxbrdrnm.supabase.co/storage/v1/object/public/assets/brand/story-images/story-image_02.jpg"
+                  src="https://eemnjizfrqobmcbcmwjf.supabase.co/storage/v1/object/public/assets/brand/story-images/story-image_02.jpg"
                   alt="Our story"
                   className="w-full h-full object-cover"
                 />

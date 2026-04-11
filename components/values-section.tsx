@@ -5,27 +5,27 @@ import { t } from "@/lib/translations"
 
 const VALUES = [
   {
-    icon: "https://tznhipxlrohslxbrdrnm.supabase.co/storage/v1/object/public/assets/brand/icons/Parentys_icon_Trust.jpg",
+    icon: "https://eemnjizfrqobmcbcmwjf.supabase.co/storage/v1/object/public/assets/brand/icons/Parentys_icon_Trust.jpg",
     titleKey: "valueTrust" as const,
     descKey: "valueTrustDesc" as const,
   },
   {
-    icon: "https://tznhipxlrohslxbrdrnm.supabase.co/storage/v1/object/public/assets/brand/icons/Parentys_icon_Kindness.jpg",
+    icon: "https://eemnjizfrqobmcbcmwjf.supabase.co/storage/v1/object/public/assets/brand/icons/Parentys_icon_Kindness.jpg",
     titleKey: "valueKindness" as const,
     descKey: "valueKindnessDesc" as const,
   },
   {
-    icon: "https://tznhipxlrohslxbrdrnm.supabase.co/storage/v1/object/public/assets/brand/icons/Parentys_icon_Accessibility.jpg",
+    icon: "https://eemnjizfrqobmcbcmwjf.supabase.co/storage/v1/object/public/assets/brand/icons/Parentys_icon_Accessibility.jpg",
     titleKey: "valueAccessibility" as const,
     descKey: "valueAccessibilityDesc" as const,
   },
   {
-    icon: "https://tznhipxlrohslxbrdrnm.supabase.co/storage/v1/object/public/assets/brand/icons/Parentys_icon_Growth.jpg",
+    icon: "https://eemnjizfrqobmcbcmwjf.supabase.co/storage/v1/object/public/assets/brand/icons/Parentys_icon_Growth.jpg",
     titleKey: "valueGrowth" as const,
     descKey: "valueGrowthDesc" as const,
   },
   {
-    icon: "https://tznhipxlrohslxbrdrnm.supabase.co/storage/v1/object/public/assets/brand/icons/Parentys_icon_Cultural%20Fit.jpg",
+    icon: "https://eemnjizfrqobmcbcmwjf.supabase.co/storage/v1/object/public/assets/brand/icons/Parentys_icon_Cultural%20Fit.jpg",
     titleKey: "valueCulturalFit" as const,
     descKey: "valueCulturalFitDesc" as const,
   },
