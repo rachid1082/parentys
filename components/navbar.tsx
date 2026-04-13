@@ -34,7 +34,7 @@ export function Navbar() {
               className="hidden h-10 w-auto md:block"
             />
             <img
-              src="https://eemnjizfrqobmcbcmwjf.supabase.co/storage/v1/object/public/assets/brand/icons/icon-rounded.png"
+              src="https://eemnjizfrqobmcbcmwjf.supabase.co/storage/v1/object/public/assets/brand/logo/symbol/Logo_Perfil%20Image.jpg"
               alt="Parentys"
               className="h-12 w-12 rounded-full object-cover md:hidden"
             />

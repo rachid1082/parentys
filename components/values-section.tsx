@@ -2,31 +2,32 @@
 
 import { useLanguage } from "@/contexts/language-context"
 import { t } from "@/lib/translations"
-import { Shield, Heart, Users, TrendingUp, Globe } from "lucide-react"
+
+const SUPABASE_STORAGE = "https://eemnjizfrqobmcbcmwjf.supabase.co/storage/v1/object/public/assets/brand"
 
 const VALUES = [
   {
-    icon: Shield,
+    icon: `${SUPABASE_STORAGE}/icons/Parentys_icon_Trust.jpg`,
     titleKey: "valueTrust" as const,
     descKey: "valueTrustDesc" as const,
   },
   {
-    icon: Heart,
+    icon: `${SUPABASE_STORAGE}/icons/Parentys_icon_Kindness.jpg`,
     titleKey: "valueKindness" as const,
     descKey: "valueKindnessDesc" as const,
   },
   {
-    icon: Users,
+    icon: `${SUPABASE_STORAGE}/icons/Parentys_icon_Accessibility.jpg`,
     titleKey: "valueAccessibility" as const,
     descKey: "valueAccessibilityDesc" as const,
   },
   {
-    icon: TrendingUp,
+    icon: `${SUPABASE_STORAGE}/icons/Parentys_icon_Growth.jpg`,
     titleKey: "valueGrowth" as const,
     descKey: "valueGrowthDesc" as const,
   },
   {
-    icon: Globe,
+    icon: `${SUPABASE_STORAGE}/icons/Parentys_icon_Cultural%20Fit.jpg`,
     titleKey: "valueCulturalFit" as const,
     descKey: "valueCulturalFitDesc" as const,
   },
@@ -46,23 +47,22 @@ export function ValuesSection() {
         </div>
 
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3 max-w-6xl mx-auto">
-          {VALUES.map((value, index) => {
-            const Icon = value.icon
-            return (
-              <div
-                key={index}
-                className="group relative bg-background rounded-2xl p-8 shadow-sm hover:shadow-md transition-all duration-300 border border-border/50"
-              >
-                <div className="mb-6">
-                  <div className="h-16 w-16 rounded-xl bg-primary/10 flex items-center justify-center">
-                    <Icon className="h-8 w-8 text-primary" />
-                  </div>
-                </div>
-                <h3 className="text-xl font-semibold text-foreground font-display mb-3">{t(value.titleKey, language)}</h3>
-                <p className="text-muted-foreground leading-relaxed">{t(value.descKey, language)}</p>
+          {VALUES.map((value, index) => (
+            <div
+              key={index}
+              className="group relative bg-background rounded-2xl p-8 shadow-sm hover:shadow-md transition-all duration-300 border border-border/50"
+            >
+              <div className="mb-6">
+                <img
+                  src={value.icon}
+                  alt={t(value.titleKey, language)}
+                  className="h-16 w-16 rounded-xl object-cover"
+                />
               </div>
-            )
-          })}
+              <h3 className="text-xl font-semibold text-foreground font-display mb-3">{t(value.titleKey, language)}</h3>
+              <p className="text-muted-foreground leading-relaxed">{t(value.descKey, language)}</p>
+            </div>
+          ))}
         </div>
       </div>
     </section>

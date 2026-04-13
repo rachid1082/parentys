@@ -6,31 +6,32 @@ import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { useLanguage } from "@/contexts/language-context";
 import { t } from "@/lib/translations";
-import { Shield, Heart, Users, TrendingUp, Globe } from "lucide-react";
+
+const SUPABASE_STORAGE = "https://eemnjizfrqobmcbcmwjf.supabase.co/storage/v1/object/public/assets/brand";
 
 const VALUES = [
   {
-    icon: Shield,
+    icon: `${SUPABASE_STORAGE}/icons/Parentys_icon_Trust.jpg`,
     titleKey: "valueTrust" as const,
     descKey: "valueTrustDesc" as const,
   },
   {
-    icon: Heart,
+    icon: `${SUPABASE_STORAGE}/icons/Parentys_icon_Kindness.jpg`,
     titleKey: "valueKindness" as const,
     descKey: "valueKindnessDesc" as const,
   },
   {
-    icon: Users,
+    icon: `${SUPABASE_STORAGE}/icons/Parentys_icon_Accessibility.jpg`,
     titleKey: "valueAccessibility" as const,
     descKey: "valueAccessibilityDesc" as const,
   },
   {
-    icon: TrendingUp,
+    icon: `${SUPABASE_STORAGE}/icons/Parentys_icon_Growth.jpg`,
     titleKey: "valueGrowth" as const,
     descKey: "valueGrowthDesc" as const,
   },
   {
-    icon: Globe,
+    icon: `${SUPABASE_STORAGE}/icons/Parentys_icon_Cultural%20Fit.jpg`,
     titleKey: "valueCulturalFit" as const,
     descKey: "valueCulturalFitDesc" as const,
   },
@@ -74,11 +75,11 @@ export default function AboutPage() {
                   {t("missionText2", language)}
                 </p>
               </div>
-              <div className="rounded-2xl overflow-hidden shadow-lg bg-gradient-to-br from-[#C9CEC0] to-[#878D73] flex items-center justify-center p-12">
+              <div className="rounded-2xl overflow-hidden shadow-lg">
                 <img
-                  src="https://eemnjizfrqobmcbcmwjf.supabase.co/storage/v1/object/public/assets/brand/logo/main/Main%20Logo%20Parentys.jpg"
+                  src="https://eemnjizfrqobmcbcmwjf.supabase.co/storage/v1/object/public/assets/brand/story-images/story-image_01.jpg"
                   alt="Our mission"
-                  className="h-32 w-auto"
+                  className="w-full h-full object-cover"
                 />
               </div>
             </div>
@@ -98,27 +99,26 @@ export default function AboutPage() {
             </div>
 
             <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3 max-w-6xl mx-auto">
-              {VALUES.map((value, index) => {
-                const Icon = value.icon;
-                return (
-                  <div
-                    key={index}
-                    className="group relative bg-background rounded-2xl p-8 shadow-sm hover:shadow-md transition-all duration-300 border border-border/50"
-                  >
-                    <div className="mb-6">
-                      <div className="h-16 w-16 rounded-xl bg-primary/10 flex items-center justify-center">
-                        <Icon className="h-8 w-8 text-primary" />
-                      </div>
-                    </div>
-                    <h3 className="text-xl font-semibold text-foreground font-display mb-3">
-                      {t(value.titleKey, language)}
-                    </h3>
-                    <p className="text-muted-foreground leading-relaxed">
-                      {t(value.descKey, language)}
-                    </p>
+              {VALUES.map((value, index) => (
+                <div
+                  key={index}
+                  className="group relative bg-background rounded-2xl p-8 shadow-sm hover:shadow-md transition-all duration-300 border border-border/50"
+                >
+                  <div className="mb-6">
+                    <img
+                      src={value.icon}
+                      alt={t(value.titleKey, language)}
+                      className="h-16 w-16 rounded-xl object-cover"
+                    />
                   </div>
-                );
-              })}
+                  <h3 className="text-xl font-semibold text-foreground font-display mb-3">
+                    {t(value.titleKey, language)}
+                  </h3>
+                  <p className="text-muted-foreground leading-relaxed">
+                    {t(value.descKey, language)}
+                  </p>
+                </div>
+              ))}
             </div>
           </div>
         </section>
@@ -127,11 +127,11 @@ export default function AboutPage() {
         <section className="py-20 md:py-28">
           <div className="container mx-auto px-4 md:px-6 lg:px-8">
             <div className="grid gap-12 lg:grid-cols-2 items-center max-w-6xl mx-auto">
-              <div className="order-2 lg:order-1 rounded-2xl overflow-hidden shadow-lg bg-gradient-to-br from-[#878D73] to-[#C9CEC0] flex items-center justify-center p-12">
+              <div className="order-2 lg:order-1 rounded-2xl overflow-hidden shadow-lg">
                 <img
-                  src="https://eemnjizfrqobmcbcmwjf.supabase.co/storage/v1/object/public/assets/brand/icons/icon-rounded.png"
+                  src="https://eemnjizfrqobmcbcmwjf.supabase.co/storage/v1/object/public/assets/brand/story-images/story-image_02.jpg"
                   alt="Our story"
-                  className="h-32 w-auto"
+                  className="w-full h-full object-cover"
                 />
               </div>
               <div className="order-1 lg:order-2">
