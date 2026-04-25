@@ -374,7 +374,9 @@ function TeamContent() {
                     {new Date(profile.created_at).toLocaleDateString()}
                   </TableCell>
                   <TableCell className="text-right">
-                    {profile.user_id !== user?.id && (
+                    {/* Hide actions for: own profile, and super-admin (unless current user IS the super-admin) */}
+                    {profile.user_id !== user?.id && 
+                     (profile.user_id !== SUPER_ADMIN_USER_ID || userIsSuperAdmin) && (
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button 
@@ -390,35 +392,40 @@ function TeamContent() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          {profile.status !== "approved" && (
-                            <DropdownMenuItem onClick={() => handleApprove(profile.id)}>
-                              <CheckCircle className="mr-2 h-4 w-4 text-green-600" />
-                              Approve
-                            </DropdownMenuItem>
-                          )}
-                          {profile.status !== "rejected" && (
-                            <DropdownMenuItem onClick={() => handleReject(profile.id)}>
-                              <XCircle className="mr-2 h-4 w-4 text-red-600" />
-                              Reject
-                            </DropdownMenuItem>
-                          )}
-                          {profile.status === "approved" && (
+                          {/* Super-admin cannot be approved/rejected/demoted by anyone */}
+                          {profile.user_id !== SUPER_ADMIN_USER_ID && (
                             <>
-                              {!profile.is_admin && (
-                                <DropdownMenuItem onClick={() => handlePromoteToAdmin(profile.id)}>
-                                  <ShieldCheck className="mr-2 h-4 w-4 text-purple-600" />
-                                  Promote to Admin
+                              {profile.status !== "approved" && (
+                                <DropdownMenuItem onClick={() => handleApprove(profile.id)}>
+                                  <CheckCircle className="mr-2 h-4 w-4 text-green-600" />
+                                  Approve
                                 </DropdownMenuItem>
                               )}
-                              {profile.is_admin && profile.role === "admin" && profile.user_id !== SUPER_ADMIN_USER_ID && (
-                                <DropdownMenuItem onClick={() => handleDemoteToExpert(profile.id)}>
-                                  <ShieldOff className="mr-2 h-4 w-4 text-orange-600" />
-                                  Demote to Expert
+                              {profile.status !== "rejected" && (
+                                <DropdownMenuItem onClick={() => handleReject(profile.id)}>
+                                  <XCircle className="mr-2 h-4 w-4 text-red-600" />
+                                  Reject
                                 </DropdownMenuItem>
+                              )}
+                              {profile.status === "approved" && (
+                                <>
+                                  {!profile.is_admin && (
+                                    <DropdownMenuItem onClick={() => handlePromoteToAdmin(profile.id)}>
+                                      <ShieldCheck className="mr-2 h-4 w-4 text-purple-600" />
+                                      Promote to Admin
+                                    </DropdownMenuItem>
+                                  )}
+                                  {profile.is_admin && profile.role === "admin" && (
+                                    <DropdownMenuItem onClick={() => handleDemoteToExpert(profile.id)}>
+                                      <ShieldOff className="mr-2 h-4 w-4 text-orange-600" />
+                                      Demote to Expert
+                                    </DropdownMenuItem>
+                                  )}
+                                </>
                               )}
                             </>
                           )}
-                          {userIsSuperAdmin && profile.user_id !== SUPER_ADMIN_USER_ID && profile.user_id !== user?.id && (
+                          {userIsSuperAdmin && profile.user_id !== SUPER_ADMIN_USER_ID && (
                             <DropdownMenuItem 
                               onClick={() => handleDeleteAdmin(profile.id, profile.user_id)}
                               className="text-red-600"
