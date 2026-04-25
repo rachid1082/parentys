@@ -20,8 +20,8 @@ interface ImageUploadProps {
 export function ImageUpload({
   value,
   onChange,
-  bucket = "Images",
-  folder = "Workshops",
+  bucket = "images",
+  folder = "workshops",
   label = "Image",
   className,
 }: ImageUploadProps) {
