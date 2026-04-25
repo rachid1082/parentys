@@ -1,11 +1,10 @@
 "use client"
 
 import { useState, useRef } from "react"
-import { createClient } from "@/lib/supabase"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Upload, X, Loader2, ImageIcon } from "lucide-react"
+import { X, Loader2, ImageIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface ImageUploadProps {
@@ -28,7 +27,6 @@ export function ImageUpload({
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const supabase = createClient()
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -50,28 +48,24 @@ export function ImageUpload({
     setUploading(true)
 
     try {
-      // Generate unique filename
-      const fileExt = file.name.split(".").pop()
-      const fileName = `${folder}/${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`
+      // Upload via API route (uses service role to bypass RLS)
+      const formData = new FormData()
+      formData.append("file", file)
+      formData.append("bucket", bucket)
+      formData.append("folder", folder)
 
-      // Upload to Supabase Storage
-      const { error: uploadError } = await supabase.storage
-        .from(bucket)
-        .upload(fileName, file, {
-          cacheControl: "3600",
-          upsert: false,
-        })
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      })
 
-      if (uploadError) {
-        throw uploadError
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || "Upload failed")
       }
 
-      // Get public URL
-      const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(fileName)
-
-      if (urlData?.publicUrl) {
-        onChange(urlData.publicUrl)
-      }
+      onChange(result.url)
     } catch (err) {
       console.error("Upload error:", err)
       setError(err instanceof Error ? err.message : "Failed to upload image")
@@ -84,20 +78,7 @@ export function ImageUpload({
     }
   }
 
-  const handleRemove = async () => {
-    // Optionally delete from storage
-    if (value) {
-      try {
-        // Extract file path from URL
-        const url = new URL(value)
-        const pathParts = url.pathname.split(`/storage/v1/object/public/${bucket}/`)
-        if (pathParts[1]) {
-          await supabase.storage.from(bucket).remove([pathParts[1]])
-        }
-      } catch (err) {
-        console.error("Error removing file:", err)
-      }
-    }
+  const handleRemove = () => {
     onChange("")
   }
 
