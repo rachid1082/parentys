@@ -370,8 +370,8 @@ export default function WorkshopEditPage() {
                 <ImageUpload
                   value={workshop.banner_url}
                   onChange={(url) => setWorkshop({ ...workshop, banner_url: url })}
-                  bucket="images"
-                  folder="workshops"
+                  bucket="Images"
+                  folder="Workshops"
                   label="Workshop Banner"
                 />
               </CardContent>

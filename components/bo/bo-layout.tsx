@@ -39,7 +39,7 @@ export const useBOAuth = () => useContext(BOAuthContext)
 
 const navItems = [
   { label: "Dashboard", href: "/bo", icon: LayoutDashboard, adminOnly: false },
-  { label: "Users", href: "/bo/users", icon: Users, adminOnly: true },
+  { label: "Team", href: "/bo/team", icon: Users, adminOnly: true },
   { label: "Experts", href: "/bo/experts", icon: ShieldCheck, adminOnly: false },
   { label: "Workshops", href: "/bo/workshops", icon: Calendar, adminOnly: false },
   { label: "Categories", href: "/bo/categories", icon: FolderTree, adminOnly: false },

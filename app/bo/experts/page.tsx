@@ -34,8 +34,15 @@ export default function BOExpertsPage() {
   )
 }
 
+interface Category {
+  id: string
+  slug: string
+  label: string
+}
+
 function ExpertsContent() {
   const [experts, setExperts] = useState<Expert[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
   const { isAdmin } = useBOAuth()
   const supabase = createClient()
@@ -62,7 +69,22 @@ function ExpertsContent() {
     if (data) {
       setExperts(data as Expert[])
     }
+    
+    // Also fetch categories for label lookup
+    const { data: categoriesData } = await supabase
+      .from("categories")
+      .select("id, slug, label")
+    
+    if (categoriesData) {
+      setCategories(categoriesData)
+    }
+    
     setLoading(false)
+  }
+  
+  const getCategoryLabel = (slug: string) => {
+    const category = categories.find((c) => c.slug === slug)
+    return category?.label || slug
   }
 
   useEffect(() => {
@@ -151,7 +173,7 @@ function ExpertsContent() {
                     <div className="flex flex-wrap gap-1">
                       {expert.categories?.slice(0, 2).map((cat) => (
                         <Badge key={cat} variant="outline" className="text-xs">
-                          {cat}
+                          {getCategoryLabel(cat)}
                         </Badge>
                       ))}
                       {expert.categories && expert.categories.length > 2 && (

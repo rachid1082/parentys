@@ -166,9 +166,16 @@ function WorkshopEditContent() {
     if (error) {
       setMessage("Error saving workshop: " + error.message)
     } else {
-      setMessage("Workshop saved successfully")
+      // Show review notification for non-admin users submitting for review
+      if (!isAdmin && workshop.status === "pending_review") {
+        setMessage(
+          "Workshop submitted for review! Our team will review your submission and you will be notified by email once approved."
+        )
+      } else {
+        setMessage("Workshop saved successfully")
+      }
       if (isNew) {
-        router.push("/bo/workshops")
+        setTimeout(() => router.push("/bo/workshops"), 2000) // Delay redirect to show message
       }
     }
     setSaving(false)
@@ -206,7 +213,13 @@ function WorkshopEditContent() {
 
       {message && (
         <div
-          className={`p-3 rounded-lg text-sm ${message.includes("Error") ? "bg-red-50 text-red-600" : "bg-green-50 text-green-600"}`}
+          className={`p-4 rounded-lg text-sm ${
+            message.includes("Error") 
+              ? "bg-red-50 text-red-600 border border-red-200" 
+              : message.includes("review") 
+              ? "bg-blue-50 text-blue-700 border border-blue-200" 
+              : "bg-green-50 text-green-600 border border-green-200"
+          }`}
         >
           {message}
         </div>
@@ -376,8 +389,8 @@ function WorkshopEditContent() {
               <ImageUpload
                 value={workshop.banner_url}
                 onChange={(url) => setWorkshop({ ...workshop, banner_url: url })}
-                bucket="images"
-                folder="workshops"
+                bucket="Images"
+                folder="Workshops"
                 label="Workshop Banner"
               />
             </CardContent>

@@ -11,7 +11,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Loader2, Plus, Pencil, Trash2, Save } from "lucide-react"
+import { Loader2, Plus, Pencil, Trash2, Save, ImageIcon } from "lucide-react"
+import { ImageUpload } from "@/components/ui/image-upload"
 
 interface Category {
   id: string
@@ -24,6 +25,7 @@ interface Category {
   description_en: string | null
   description_fr: string | null
   description_ar: string | null
+  image_url: string | null
   order_index: number | null
 }
 
@@ -37,6 +39,7 @@ const defaultCategory: Omit<Category, "id"> = {
   description_en: "",
   description_fr: "",
   description_ar: "",
+  image_url: "",
   order_index: 0,
 }
 
@@ -55,6 +58,7 @@ function CategoriesContent() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingCategory, setEditingCategory] = useState<Category | null>(null)
   const [formData, setFormData] = useState<Omit<Category, "id">>(defaultCategory)
+  const [originalOrderIndex, setOriginalOrderIndex] = useState<number | null>(null)
   const supabase = createClient()
 
   const fetchCategories = async () => {
@@ -78,6 +82,7 @@ function CategoriesContent() {
 
   const openEditDialog = (category: Category) => {
     setEditingCategory(category)
+    setOriginalOrderIndex(category.order_index)
     setFormData({
       slug: category.slug,
       label: category.label,
@@ -88,12 +93,23 @@ function CategoriesContent() {
       description_en: category.description_en || "",
       description_fr: category.description_fr || "",
       description_ar: category.description_ar || "",
+      image_url: category.image_url || "",
       order_index: category.order_index || 0,
     })
     setDialogOpen(true)
   }
 
   const handleSave = async () => {
+    // Check if order is being changed when editing
+    if (editingCategory && originalOrderIndex !== null && formData.order_index !== originalOrderIndex) {
+      const confirmed = confirm(
+        "Are you sure you want to change the order? This may override the current ordering of categories in the list."
+      )
+      if (!confirmed) {
+        return
+      }
+    }
+
     setSaving(true)
 
     const payload = {
@@ -106,6 +122,7 @@ function CategoriesContent() {
       description_en: formData.description_en || null,
       description_fr: formData.description_fr || null,
       description_ar: formData.description_ar || null,
+      image_url: formData.image_url || null,
       order_index: formData.order_index,
     }
 
@@ -173,7 +190,7 @@ function CategoriesContent() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Order Index</Label>
+                  <Label>Order in the list</Label>
                   <Input
                     type="number"
                     value={formData.order_index || 0}
@@ -260,6 +277,14 @@ function CategoriesContent() {
                 </Tabs>
               </div>
 
+              <ImageUpload
+                value={formData.image_url || ""}
+                onChange={(url) => setFormData({ ...formData, image_url: url })}
+                bucket="Images"
+                folder="Categories"
+                label="Category Image"
+              />
+
               <Button onClick={handleSave} disabled={saving} className="w-full">
                 {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
                 {editingCategory ? "Save Changes" : "Create Category"}
@@ -278,6 +303,7 @@ function CategoriesContent() {
             <TableHeader>
               <TableRow>
                 <TableHead>Order</TableHead>
+                <TableHead>Image</TableHead>
                 <TableHead>Slug</TableHead>
                 <TableHead>Label</TableHead>
                 <TableHead>Description</TableHead>
@@ -288,6 +314,19 @@ function CategoriesContent() {
               {categories.map((category) => (
                 <TableRow key={category.id}>
                   <TableCell>{category.order_index || 0}</TableCell>
+                  <TableCell>
+                    {category.image_url ? (
+                      <img
+                        src={category.image_url}
+                        alt={category.label}
+                        className="h-10 w-10 rounded object-cover"
+                      />
+                    ) : (
+                      <div className="h-10 w-10 rounded bg-muted flex items-center justify-center">
+                        <ImageIcon className="h-5 w-5 text-muted-foreground" />
+                      </div>
+                    )}
+                  </TableCell>
                   <TableCell className="font-mono text-sm">{category.slug}</TableCell>
                   <TableCell className="font-medium">{category.label}</TableCell>
                   <TableCell className="max-w-[200px] truncate text-muted-foreground">
@@ -312,7 +351,7 @@ function CategoriesContent() {
               ))}
               {categories.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                     No categories found. Create one to link to workshops and articles.
                   </TableCell>
                 </TableRow>

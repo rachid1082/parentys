@@ -1,5 +1,8 @@
 import { createClient } from "@/lib/supabase"
 
+// Hardcoded super-admin user ID - only this user can remove other admins
+export const SUPER_ADMIN_USER_ID = "32ce58a9-e706-4ffd-88e4-fc61dcef8539"
+
 export type Role = "admin" | "expert"
 export type ProfileStatus = "pending" | "approved" | "rejected"
 
@@ -95,4 +98,12 @@ export function isExpertOrAdmin(user: BOUser | null): boolean {
   if (!user) return false
   if (user.status !== "approved") return false
   return user.role === "admin" || user.role === "expert"
+}
+
+/**
+ * Check if user is the super-admin (hardcoded)
+ */
+export function isSuperAdmin(user: BOUser | null): boolean {
+  if (!user) return false
+  return user.id === SUPER_ADMIN_USER_ID && isAdmin(user)
 }

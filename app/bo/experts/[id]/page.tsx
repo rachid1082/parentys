@@ -112,7 +112,7 @@ function ExpertEditContent() {
     setSaving(true)
     setMessage("")
 
-    // Update expert
+    // Update expert - categories are NOT editable by admins, only by experts themselves
     const { error: expertError } = await supabase
       .from("experts")
       .update({
@@ -124,7 +124,6 @@ function ExpertEditContent() {
         bio_en: expert.bio_en,
         bio_fr: expert.bio_fr,
         bio_ar: expert.bio_ar,
-        categories: selectedCategories,
         status: expert.status,
         avatar_url: expert.avatar_url,
         updated_at: new Date().toISOString(),
@@ -142,10 +141,6 @@ function ExpertEditContent() {
       setMessage("Expert saved successfully")
     }
     setSaving(false)
-  }
-
-  const toggleCategory = (slug: string) => {
-    setSelectedCategories((prev) => (prev.includes(slug) ? prev.filter((c) => c !== slug) : [...prev, slug]))
   }
 
   if (loading) {
@@ -344,19 +339,25 @@ function ExpertEditContent() {
               <CardTitle>Categories</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-2">
-                {categories.map((category) => (
-                  <label key={category.id} className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={selectedCategories.includes(category.slug)}
-                      onChange={() => toggleCategory(category.slug)}
-                      className="rounded border-[#C9CEC0]"
-                    />
-                    <span className="text-sm">{category.label}</span>
-                  </label>
-                ))}
-                {categories.length === 0 && <p className="text-sm text-muted-foreground">No categories available</p>}
+              <p className="text-xs text-muted-foreground mb-3">
+                Categories are managed by the expert themselves and cannot be edited here.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {selectedCategories.length > 0 ? (
+                  selectedCategories.map((slug) => {
+                    const category = categories.find((c) => c.slug === slug)
+                    return (
+                      <span
+                        key={slug}
+                        className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#C9CEC0] text-[#333333]"
+                      >
+                        {category?.label || slug}
+                      </span>
+                    )
+                  })
+                ) : (
+                  <p className="text-sm text-muted-foreground">No categories assigned</p>
+                )}
               </div>
             </CardContent>
           </Card>
