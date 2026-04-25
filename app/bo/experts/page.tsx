@@ -82,9 +82,10 @@ function ExpertsContent() {
     setLoading(false)
   }
   
-  const getCategoryLabel = (slug: string) => {
-    const category = categories.find((c) => c.slug === slug)
-    return category?.label || slug
+  const getCategoryLabel = (slugOrId: string) => {
+    // Match by slug OR by id (experts may store category IDs or slugs)
+    const category = categories.find((c) => c.slug === slugOrId || c.id === slugOrId)
+    return category?.label || slugOrId
   }
 
   useEffect(() => {

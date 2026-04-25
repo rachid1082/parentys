@@ -344,14 +344,15 @@ function ExpertEditContent() {
               </p>
               <div className="flex flex-wrap gap-2">
                 {selectedCategories.length > 0 ? (
-                  selectedCategories.map((slug) => {
-                    const category = categories.find((c) => c.slug === slug)
+                  selectedCategories.map((slugOrId) => {
+                    // Match by slug OR by id (experts may store category IDs or slugs)
+                    const category = categories.find((c) => c.slug === slugOrId || c.id === slugOrId)
                     return (
                       <span
-                        key={slug}
+                        key={slugOrId}
                         className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#C9CEC0] text-[#333333]"
                       >
-                        {category?.label || slug}
+                        {category?.label || slugOrId}
                       </span>
                     )
                   })

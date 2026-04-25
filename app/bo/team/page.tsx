@@ -132,41 +132,24 @@ function TeamContent() {
     setInviting(true)
     setInviteMessage("")
 
+    // Generate the registration link with pre-filled role
+    const registrationUrl = `${window.location.origin}/bo/login?register=true&role=${inviteRole}`
+    
+    // Copy to clipboard for easy sharing
     try {
-      // Use Supabase Auth to send invitation email
-      // Note: This requires magic link or email invite to be enabled in Supabase
-      const { error } = await supabase.auth.admin.inviteUserByEmail(inviteEmail, {
-        data: {
-          full_name: inviteName,
-          role: inviteRole,
-        },
-        redirectTo: `${window.location.origin}/bo/login`,
-      })
-
-      if (error) {
-        // If admin invite fails, we can create a pending profile manually
-        // and send instructions via email (would need email service)
-        setInviteMessage(
-          "Note: Supabase admin invite requires service role. The user can register at /bo/login and will be assigned their role upon approval."
-        )
-        
-        // For now, show the registration instructions
-        setTimeout(() => {
-          setInviteMessage(
-            `Invite sent! Please inform ${inviteEmail} to register at ${window.location.origin}/bo/login. They will be approved as ${inviteRole === "admin" ? "an Admin" : "an Expert"}.`
-          )
-        }, 2000)
-      } else {
-        setInviteMessage(`Invitation sent to ${inviteEmail}`)
-        setInviteEmail("")
-        setInviteName("")
-        setInviteRole("expert")
-      }
+      await navigator.clipboard.writeText(
+        `You've been invited to join Parentys as ${inviteRole === "admin" ? "an Admin" : "an Expert"}!\n\nRegister here: ${registrationUrl}\n\nOnce registered, your account will be reviewed and approved.`
+      )
+      setInviteMessage(
+        `Invitation details copied to clipboard! Share with ${inviteEmail}. They should register at the link, and you'll approve them once they sign up.`
+      )
     } catch {
-      setInviteMessage("Failed to send invitation. Please try again.")
-    } finally {
-      setInviting(false)
+      setInviteMessage(
+        `Please share this link with ${inviteEmail}: ${registrationUrl}`
+      )
     }
+    
+    setInviting(false)
   }
 
   const resetInviteDialog = () => {
