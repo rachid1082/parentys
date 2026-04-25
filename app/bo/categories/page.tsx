@@ -280,8 +280,8 @@ function CategoriesContent() {
               <ImageUpload
                 value={formData.image_url || ""}
                 onChange={(url) => setFormData({ ...formData, image_url: url })}
-                bucket="Images"
-                folder="Categories"
+                bucket="images"
+                folder="categories"
                 label="Category Image"
               />
 
