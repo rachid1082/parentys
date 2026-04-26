@@ -132,24 +132,31 @@ function TeamContent() {
     setInviting(true)
     setInviteMessage("")
 
-    // Generate the registration link with pre-filled role
-    const registrationUrl = `${window.location.origin}/bo/login?register=true&role=${inviteRole}`
-    
-    // Copy to clipboard for easy sharing
     try {
-      await navigator.clipboard.writeText(
-        `You've been invited to join Parentys as ${inviteRole === "admin" ? "an Admin" : "an Expert"}!\n\nRegister here: ${registrationUrl}\n\nOnce registered, your account will be reviewed and approved.`
-      )
-      setInviteMessage(
-        `Invitation details copied to clipboard! Share with ${inviteEmail}. They should register at the link, and you'll approve them once they sign up.`
-      )
-    } catch {
-      setInviteMessage(
-        `Please share this link with ${inviteEmail}: ${registrationUrl}`
-      )
+      const response = await fetch("/api/invite", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: inviteEmail,
+          fullName: inviteName,
+          role: inviteRole,
+        }),
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to send invitation")
+      }
+
+      setInviteMessage(`Invitation email sent to ${inviteEmail}! They will receive a link to set up their account.`)
+      setInviteEmail("")
+      setInviteName("")
+    } catch (err) {
+      setInviteMessage(err instanceof Error ? err.message : "Failed to send invitation")
+    } finally {
+      setInviting(false)
     }
-    
-    setInviting(false)
   }
 
   const resetInviteDialog = () => {
