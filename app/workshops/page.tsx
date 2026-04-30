@@ -5,7 +5,11 @@ import { WorkshopsListClient } from "@/components/workshops/WorkshopsListClient"
 export default async function WorkshopsPage() {
   const supabase = await createServerSupabaseClient()
 
-  const { data: workshops, error } = await supabase.from("workshops").select("*").order("title_en", { ascending: true })
+  const { data: workshops, error } = await supabase
+    .from("workshops")
+    .select("*")
+    .eq("status", "published")
+    .order("starts_at", { ascending: true })
 
   if (error) {
     console.error("[v0] Error fetching workshops:", error)

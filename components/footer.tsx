@@ -14,7 +14,7 @@ export function Footer() {
           <div>
             <div className="mb-4 flex items-center gap-3">
               <img
-                src="https://tznhipxlrohslxbrdrnm.supabase.co/storage/v1/object/public/assets/brand/logo/symbol/Logo_Perfil%20Image.jpg"
+                src="https://eemnjizfrqobmcbcmwjf.supabase.co/storage/v1/object/public/assets/brand/logo/symbol/Logo_Perfil%20Image.jpg"
                 alt="Parentys"
                 className="h-12 w-12 rounded-full object-cover"
               />

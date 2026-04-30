@@ -34,7 +34,7 @@ export function AdminSidebar() {
       <div className="p-6 border-b border-[#C9CEC0]">
         <Link href="/admin">
           <img
-            src="https://tznhipxlrohslxbrdrnm.supabase.co/storage/v1/object/public/assets/brand/logo/main/Main%20Logo%20Parentys.jpg"
+            src="https://eemnjizfrqobmcbcmwjf.supabase.co/storage/v1/object/public/assets/brand/logo/bo/bo-sidebar-logo.png"
             alt="Parentys Admin"
             className="h-10"
           />

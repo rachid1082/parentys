@@ -12,7 +12,7 @@ export function HeroSection() {
     <section className="relative overflow-hidden">
       <div className="relative h-[600px] md:h-[700px]">
         <img
-          src="https://tznhipxlrohslxbrdrnm.supabase.co/storage/v1/object/public/assets/brand/banners/Banner_with%20logo_01.jpg"
+          src="https://eemnjizfrqobmcbcmwjf.supabase.co/storage/v1/object/public/assets/brand/banners/Banner_with%20logo_01.jpg"
           alt="Parentys hero banner"
           className="absolute inset-0 h-full w-full object-cover"
         />
